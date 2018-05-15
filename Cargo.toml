@@ -1,0 +1,9 @@
+[package]
+name = "arpabet"
+version = "0.1.0"
+authors = ["Brandon Thomas <bt@brand.io>",
+           "Brandon Thomas <echelon@gmail.com>"]
+
+[dependencies]
+regex = "1.0.*"
+
