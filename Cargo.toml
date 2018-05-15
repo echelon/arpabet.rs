@@ -1,0 +1,18 @@
+[package]
+name = "arpabet"
+description = "A library for builing text to speech applications."
+version = "0.1.0"
+keywords = [ "TTS", "text", "speech", "CMU" ]
+authors = ["Brandon Thomas <bt@brand.io>",
+           "Brandon Thomas <echelon@gmail.com>"]
+license = "BSD-4-Clause"
+repository = "https://github.com/echelon/arpabet.rs"
+documentation = "https://docs.rs/arpabet"
+
+[dependencies]
+lazy_static = "1.0"
+regex = "1.0"
+
+[dev_dependencies]
+chrono = "0.4"
+expectest = "0.10"
