@@ -1,57 +1,20 @@
 extern crate regex;
 
+mod error;
+
+pub use error::ArpabetError;
 use regex::Regex;
 use std::collections::HashMap;
-use std::error::Error;
-use std::fmt;
 use std::fs::File;
 use std::io::BufRead;
 use std::io::BufReader;
-use std::io;
 
 pub type Word = String;
 pub type Phoneme = String;
 pub type Polyphone = Vec<Phoneme>;
 
-//const CMU_DICT : &'static str = include!("../cmudict/cmudict-0.7b");
-const CMU_DICT : &'static str = include_str!("../cmudict/test.txt");
-
-#[derive(Debug)]
-pub enum ArpabetError {
-  EmptyFile,
-  Io(io::Error),
-}
-
-impl fmt::Display for ArpabetError {
-  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-    match *self {
-      ArpabetError::EmptyFile => write!(f, "The file was empty."),
-      ArpabetError::Io(ref err) => err.fmt(f),
-    }
-  }
-}
-
-impl Error for ArpabetError {
-  fn description(&self) -> &str {
-    match *self {
-      ArpabetError::EmptyFile => "The file was empty.",
-      ArpabetError::Io(ref err) => err.description(),
-    }
-  }
-
-  fn cause(&self) -> Option<&Error> {
-    match *self {
-      ArpabetError::EmptyFile => None,
-      ArpabetError::Io(ref err) => Some(err),
-    }
-  }
-}
-
-impl From<io::Error> for ArpabetError {
-  fn from(err: io::Error) -> ArpabetError {
-    ArpabetError::Io(err)
-  }
-}
+const CMU_DICT : &'static str = include_str!("../cmudict/cmudict-0.7b");
+//const CMU_DICT : &'static str = include_str!("../cmudict/test.txt");
 
 pub struct Arpabet {
   /// A map of lowercase words to polyphone breakdown (phones are uppercase).
@@ -83,6 +46,7 @@ impl Arpabet {
           let phonemes_match = caps.get(2);
 
           if word_match.is_some() && phonemes_match.is_some() {
+            // FIXME: Error handling
             let word = word_match.unwrap().as_str().to_lowercase();
             let split = phonemes_match.unwrap().as_str().split(" ");
             let v1 = split.collect::<Vec<&str>>();
@@ -108,8 +72,8 @@ impl Arpabet {
 
 #[cfg(test)]
 mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-    }
+  #[test]
+  fn it_works() {
+    assert_eq!(2 + 2, 4);
+  }
 }
