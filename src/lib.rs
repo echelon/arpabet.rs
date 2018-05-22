@@ -1,3 +1,11 @@
+// TODO:
+// 1. load_from_file + test
+// 2. merge_arpabet + test
+// 3. dedup code
+// 4. finalize API
+// 5. strict compiler flags
+// 6. cleanup and release
+
 #[cfg(test)] extern crate chrono;
 #[cfg(test)] #[macro_use] extern crate expectest;
 
@@ -45,7 +53,7 @@ impl Arpabet {
 
     // Format resembles the following,
     // ABBREVIATE  AH0 B R IY1 V IY0 EY2 T
-    let re = Regex::new(r"^([\w\-']+)\s+(.*)$")
+    let re = Regex::new(r"^([\w\-']+)\s+(.*)\s*$")
         .expect("Regex should be correct.");
 
     for line in text.lines() {
@@ -86,7 +94,7 @@ impl Arpabet {
 
     // Format resembles the following,
     // ABBREVIATE  AH0 B R IY1 V IY0 EY2 T
-    let re = Regex::new(r"^([\w-']+)\s+(.*)\n$")
+    let re = Regex::new(r"^([\w\-']+)\s+(.*)\s*$")
         .expect("Regex should be correct.");
 
     while reader.read_line(&mut buffer)? > 0 {
@@ -144,7 +152,7 @@ mod tests {
     let text = "DOCTOR  D AA1 K T ER0\n\
                 MARIO  M AA1 R IY0 OW0";
 
-    let arpabet = Arpabet::load_from_str(text).expect("Should load");
+    let arpabet = Arpabet::load_from_str(text).expect("Text should load");
 
     assert_eq!(arpabet.get_polyphone("super"), None);
 
@@ -153,6 +161,20 @@ mod tests {
 
     assert_eq!(arpabet.get_polyphone("mario"),
       Some(to_strings(vec!["M", "AA1", "R", "IY0","OW0"])));
+  }
+
+  #[test]
+  fn load_from_file() {
+    let arpabet = Arpabet::load_from_file("./tests/file_load_test.txt")
+        .expect("File should load");
+
+    assert_eq!(arpabet.get_polyphone("pokemon"),
+      Some(to_strings(vec!["P", "OW1", "K", "EY1", "AH0", "N"])));
+
+    assert_eq!(arpabet.get_polyphone("pikachu"),
+      Some(to_strings(vec!["P", "IY1", "K", "AH0", "CH", "UW1"])));
+
+    assert_eq!(arpabet.get_polyphone("bulbasaur"), None);
   }
 
   #[test]
@@ -174,7 +196,7 @@ mod tests {
   }
 
   #[test]
-  fn caches_cmudict() {
+  fn cmudict_is_cached() {
     let _ = Arpabet::load_cmudict(); // pre-cache
 
     let start = Utc::now();
