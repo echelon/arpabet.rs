@@ -16,10 +16,9 @@ pub type Phoneme = String;
 pub type Polyphone = Vec<Phoneme>;
 
 const CMU_DICT_TEXT : &'static str = include_str!("../cmudict/cmudict-0.7b");
-//const CMU_DICT : &'static str = include_str!("../cmudict/test.txt");
 
 lazy_static! {
-    static ref CMU_DICT : Arpabet = Arpabet::load_from_text(CMU_DICT_TEXT)
+    static ref CMU_DICT : Arpabet = Arpabet::load_from_str(CMU_DICT_TEXT)
         .expect("should load");
 }
 
@@ -32,14 +31,14 @@ pub struct Arpabet {
 impl Arpabet {
   /// Loads and caches the CMU Arpabet, which is already present in an unparsed
   /// form in memory.
-  pub fn load_cmu_arpabet() -> &'static Arpabet {
+  pub fn load_cmudict() -> &'static Arpabet {
     &CMU_DICT
   }
 
   /// Load a dictionary from text
   /// The file format is expected to match that of
   /// [CMUdict](http://www.speech.cs.cmu.edu/cgi-bin/cmudict).
-  pub fn load_from_text(text: &str) -> Result<Arpabet, ArpabetError> {
+  pub fn load_from_str(text: &str) -> Result<Arpabet, ArpabetError> {
     let mut map = HashMap::new();
 
     // Format resembles the following,
@@ -131,16 +130,42 @@ impl Arpabet {
 mod tests {
   use super::*;
 
-  #[test]
-  fn it_works() {
-    assert_eq!(2 + 2, 4);
+  fn to_strings(strs: Vec<&str>) -> Vec<String> {
+    strs.iter().map(|s| s.to_string()).collect()
   }
 
   #[test]
-  fn cmudict_loads() {
-    let arpabet = Arpabet::load_cmu_arpabet();
-    assert_eq!(arpabet.get_polyphone("test"),
-        Some(vec!["T".to_string(), "EH1".to_string(), "S".to_string(), "T".to_string()]));
+  fn load_from_str() {
+    let text = "DOCTOR  D AA1 K T ER0\n\
+                MARIO  M AA1 R IY0 OW0";
+
+    let arpabet = Arpabet::load_from_str(text).expect("Should load");
+
+    assert_eq!(arpabet.get_polyphone("super"), None);
+
+    assert_eq!(arpabet.get_polyphone("doctor"),
+      Some(to_strings(vec!["D", "AA1", "K", "T","ER0"])));
+
+    assert_eq!(arpabet.get_polyphone("mario"),
+      Some(to_strings(vec!["M", "AA1", "R", "IY0","OW0"])));
+  }
+
+  #[test]
+  fn load_cmudict() {
+    let arpabet = Arpabet::load_cmudict();
+
+    assert_eq!(arpabet.get_polyphone("game"),
+      Some(to_strings(vec!["G", "EY1", "M"])));
+
+    assert_eq!(arpabet.get_polyphone("boy"),
+      Some(to_strings(vec!["B", "OY1"])));
+
+    assert_eq!(arpabet.get_polyphone("advance"),
+      Some(to_strings(vec!["AH0", "D", "V", "AE1", "N", "S"])));
+
+    assert_eq!(arpabet.get_polyphone("sp"), None);
+
+    assert_eq!(arpabet.get_polyphone("ZZZZZ"), None);
   }
 }
 
