@@ -19,10 +19,9 @@ const CMU_DICT_TEXT : &'static str = include_str!("../cmudict/cmudict-0.7b");
 //const CMU_DICT : &'static str = include_str!("../cmudict/test.txt");
 
 lazy_static! {
-    pub static ref CMU_DICT : Arpabet = Arpabet::load_from_text(CMU_DICT_TEXT)
+    static ref CMU_DICT : Arpabet = Arpabet::load_from_text(CMU_DICT_TEXT)
         .expect("should load");
 }
-
 
 pub struct Arpabet {
   /// A map of lowercase words to polyphone breakdown (phones are uppercase).
@@ -31,6 +30,12 @@ pub struct Arpabet {
 }
 
 impl Arpabet {
+  /// Loads and caches the CMU Arpabet, which is already present in an unparsed
+  /// form in memory.
+  pub fn load_cmu_arpabet() -> &'static Arpabet {
+    &CMU_DICT
+  }
+
   /// Load a dictionary from text
   /// The file format is expected to match that of
   /// [CMUdict](http://www.speech.cs.cmu.edu/cgi-bin/cmudict).
@@ -133,7 +138,8 @@ mod tests {
 
   #[test]
   fn cmudict_loads() {
-    assert_eq!(CMU_DICT.get_polyphone("test"),
+    let arpabet = Arpabet::load_cmu_arpabet();
+    assert_eq!(arpabet.get_polyphone("test"),
         Some(vec!["T".to_string(), "EH1".to_string(), "S".to_string(), "T".to_string()]));
   }
 }
