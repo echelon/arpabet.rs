@@ -1,3 +1,5 @@
+#[cfg(test)] extern crate chrono;
+#[cfg(test)] #[macro_use] extern crate expectest;
 
 #[macro_use] extern crate lazy_static;
 extern crate regex;
@@ -18,8 +20,8 @@ pub type Polyphone = Vec<Phoneme>;
 const CMU_DICT_TEXT : &'static str = include_str!("../cmudict/cmudict-0.7b");
 
 lazy_static! {
-    static ref CMU_DICT : Arpabet = Arpabet::load_from_str(CMU_DICT_TEXT)
-        .expect("should load");
+  static ref CMU_DICT : Arpabet = Arpabet::load_from_str(CMU_DICT_TEXT)
+      .expect("CMU dictionary should lazily load.");
 }
 
 pub struct Arpabet {
@@ -128,6 +130,9 @@ impl Arpabet {
 
 #[cfg(test)]
 mod tests {
+  use chrono::prelude::*;
+  use expectest::prelude::*;
+
   use super::*;
 
   fn to_strings(strs: Vec<&str>) -> Vec<String> {
@@ -167,6 +172,23 @@ mod tests {
 
     assert_eq!(arpabet.get_polyphone("ZZZZZ"), None);
   }
+
+  #[test]
+  fn caches_cmudict() {
+    let _ = Arpabet::load_cmudict(); // pre-cache
+
+    let start = Utc::now();
+
+    for _ in 0 .. 1000 {
+      // This should be cached...
+      let arpabet = Arpabet::load_cmudict();
+
+      assert_eq!(arpabet.get_polyphone("yep"),
+        Some(to_strings(vec!["Y", "EH1", "P"])));
+    }
+
+    let end = Utc::now();
+    let duration = end.signed_duration_since(start);
+    expect!(duration.num_milliseconds()).to(be_less_than(1_000));
+  }
 }
-
-
