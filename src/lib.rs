@@ -125,10 +125,40 @@ impl Arpabet {
   }
 
   /// Get a polyphone from the dictionary.
+  pub fn get_polyphone_ref(&self, word: &str) -> Option<&Polyphone> {
+    self.dictionary.get(word)
+  }
+
+  /// Get a polyphone from the dictionary.
   pub fn get_polyphone(&self, word: &str) -> Option<Polyphone> {
     self.dictionary.get(word).and_then(|p| {
       Some(p.iter().map(|s| s.to_string()).collect::<Vec<String>>())
     })
+  }
+
+  /// Combine two Arpabets and return the result.
+  /// Items in the second Arpabet take precedence.
+  pub fn combine(&self, other: &Arpabet) -> Arpabet {
+    let mut merged = self.dictionary.clone();
+    for (k, v) in other.dictionary.iter() {
+      merged.insert(k.clone(), v.clone());
+    }
+    Arpabet { dictionary: merged }
+  }
+
+  /// Merge the supplied Arpabet into the current one.
+  /// Items in the supplied Arpabet override existing entries
+  /// should they already exist.
+  pub fn merge(&mut self, other: &Arpabet) {
+    for (k, v) in other.dictionary.iter() {
+      self.dictionary.insert(k.clone(), v.clone());
+    }
+  }
+
+  /// Insert an entry into the Arpabet. If the entry is already present,
+  /// replace it and return the old value.
+  pub fn insert(&mut self, key: Word, value: Polyphone) -> Option<Polyphone> {
+    self.dictionary.insert(key, value)
   }
 }
 
@@ -212,5 +242,30 @@ mod tests {
     let end = Utc::now();
     let duration = end.signed_duration_since(start);
     expect!(duration.num_milliseconds()).to(be_less_than(1_000));
+  }
+
+  #[test]
+  fn insert() {
+    assert!(false)
+  }
+
+  #[test]
+  fn get_polyphone() {
+    assert!(false)
+  }
+
+  #[test]
+  fn get_polyphone_ref() {
+    assert!(false)
+  }
+
+  #[test]
+  fn combine() {
+    assert!(false)
+  }
+
+  #[test]
+  fn merge() {
+    assert!(false)
   }
 }
