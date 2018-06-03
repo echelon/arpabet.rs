@@ -66,17 +66,24 @@ impl Arpabet {
       match FILE_REGEX.captures(&line) {
         None => {},
         Some(caps) => {
-          let word_match = caps.get(1);
-          let phonemes_match = caps.get(2);
+          let word = match caps.get(1) {
+            None => continue,
+            Some(m) => m.as_str()
+                .to_lowercase(),
+          };
 
-          if word_match.is_some() && phonemes_match.is_some() {
-            // FIXME: Error handling
-            let word = word_match.unwrap().as_str().to_lowercase();
-            let split = phonemes_match.unwrap().as_str().split(" ");
-            let v1 = split.collect::<Vec<&str>>();
-            let v2 = v1.iter().map(|s| s.to_string()).collect::<Vec<String>>();
-            map.insert(word, v2);
-          }
+          let phonemes = match caps.get(2) {
+            None => continue,
+            Some(m) => m.as_str()
+                .split(" ")
+                .collect::<Vec<&str>>(),
+          };
+
+          let phonemes = phonemes.iter()
+              .map(|s| s.to_string().to_uppercase())
+              .collect::<Vec<String>>();
+
+          map.insert(word, phonemes);
         },
       }
     }
