@@ -1,16 +1,14 @@
 // TODO:
-// 1. load_from_file + test
-// 2. merge_arpabet + test
 // 3. dedup code
 // 4. finalize API
 // 5. strict compiler flags
 // 6. cleanup and release
 
-#[cfg(test)] extern crate chrono;
-#[cfg(test)] #[macro_use] extern crate expectest;
-
 #[macro_use] extern crate lazy_static;
 extern crate regex;
+
+#[cfg(test)] extern crate chrono;
+#[cfg(test)] #[macro_use] extern crate expectest;
 
 mod error;
 
@@ -28,8 +26,15 @@ pub type Polyphone = Vec<Phoneme>;
 const CMU_DICT_TEXT : &'static str = include_str!("../cmudict/cmudict-0.7b");
 
 lazy_static! {
+  // Lazily cached copy of the entire CMU arpabet.
   static ref CMU_DICT : Arpabet = Arpabet::load_from_str(CMU_DICT_TEXT)
       .expect("CMU dictionary should lazily load.");
+
+  // Regex for reading CMU arpabet, or similarly formatted files.
+  // Format resembles the following,
+  // ABBREVIATE  AH0 B R IY1 V IY0 EY2 T
+  static ref FILE_REGEX : Regex = Regex::new(r"^([\w\-']+)\s+(.*)\s*$")
+      .expect("Regex is correct.");
 }
 
 #[derive(Default)]
@@ -57,13 +62,8 @@ impl Arpabet {
   pub fn load_from_str(text: &str) -> Result<Arpabet, ArpabetError> {
     let mut map = HashMap::new();
 
-    // Format resembles the following,
-    // ABBREVIATE  AH0 B R IY1 V IY0 EY2 T
-    let re = Regex::new(r"^([\w\-']+)\s+(.*)\s*$")
-        .expect("Regex should be correct.");
-
     for line in text.lines() {
-      match re.captures(&line) {
+      match FILE_REGEX.captures(&line) {
         None => {},
         Some(caps) => {
           let word_match = caps.get(1);
@@ -98,13 +98,8 @@ impl Arpabet {
     let mut map = HashMap::new();
     let mut buffer = String::new();
 
-    // Format resembles the following,
-    // ABBREVIATE  AH0 B R IY1 V IY0 EY2 T
-    let re = Regex::new(r"^([\w\-']+)\s+(.*)\s*$")
-        .expect("Regex should be correct.");
-
     while reader.read_line(&mut buffer)? > 0 {
-      match re.captures(&buffer) {
+      match FILE_REGEX.captures(&buffer) {
         None => {},
         Some(caps) => {
           let word_match = caps.get(1);
