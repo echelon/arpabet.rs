@@ -32,6 +32,7 @@ lazy_static! {
       .expect("CMU dictionary should lazily load.");
 }
 
+#[derive(Default)]
 pub struct Arpabet {
   /// A map of lowercase words to polyphone breakdown (phones are uppercase).
   /// eg. 'jungle' -> [JH, AH1, NG, G, AH0, L]
@@ -39,6 +40,11 @@ pub struct Arpabet {
 }
 
 impl Arpabet {
+  /// Create a new instance.
+  pub fn new() -> Arpabet {
+    Arpabet { dictionary: HashMap::new() }
+  }
+
   /// Loads and caches the CMU Arpabet, which is already present in an unparsed
   /// form in memory.
   pub fn load_cmudict() -> &'static Arpabet {
@@ -246,26 +252,74 @@ mod tests {
 
   #[test]
   fn insert() {
-    assert!(false)
+    let mut arpa = Arpabet::new();
+    arpa.insert("foo".to_string(), to_strings(vec!["F", "UW1"]));
+
+    assert_eq!(arpa.get_polyphone("foo"), Some(to_strings(vec!["F", "UW1"])));
+    assert_eq!(arpa.get_polyphone("bar"), None);
+
+    arpa.insert("foo".to_string(), to_strings(vec!["B", "UW1"]));
+
+    assert_eq!(arpa.get_polyphone("foo"), Some(to_strings(vec!["B", "UW1"])));
   }
 
   #[test]
   fn get_polyphone() {
-    assert!(false)
+    let mut a = Arpabet::new();
+    a.insert("foo".to_string(), to_strings(vec!["F", "UW1"]));
+    assert_eq!(a.get_polyphone("foo"), Some(to_strings(vec!["F", "UW1"])));
+    assert_eq!(a.get_polyphone("bar"), None);
   }
 
   #[test]
   fn get_polyphone_ref() {
-    assert!(false)
+    let mut a = Arpabet::new();
+    a.insert("foo".to_string(), to_strings(vec!["F", "UW1"]));
+    assert_eq!(a.get_polyphone_ref("foo"), Some(&to_strings(vec!["F", "UW1"])));
+    assert_eq!(a.get_polyphone_ref("bar"), None);
   }
 
   #[test]
   fn combine() {
-    assert!(false)
+    let a = {
+      let mut arpa = Arpabet::new();
+      arpa.insert("foo".to_string(), to_strings(vec!["F", "UW1"]));
+      arpa.insert("bar".to_string(), to_strings(vec!["B", "A1", "R"]));
+      arpa
+    };
+    let b = {
+      let mut arpa = Arpabet::new();
+      arpa.insert("foo".to_string(), to_strings(vec!["B", "OO"]));
+      arpa.insert("baz".to_string(), to_strings(vec!["B", "AE1", "Z"]));
+      arpa
+    };
+
+    let c = a.combine(&b);
+
+    assert_eq!(c.get_polyphone("foo"), Some(to_strings(vec!["B", "OO"])));
+    assert_eq!(c.get_polyphone("bar"), Some(to_strings(vec!["B", "A1", "R"])));
+    assert_eq!(c.get_polyphone("baz"), Some(to_strings(vec!["B", "AE1", "Z"])));
+    assert_eq!(c.get_polyphone("bin"), None);
   }
 
   #[test]
   fn merge() {
-    assert!(false)
+    let mut a = Arpabet::new();
+    a.insert("foo".to_string(), to_strings(vec!["F", "UW1"]));
+    a.insert("bar".to_string(), to_strings(vec!["B", "A1", "R"]));
+
+    let b = {
+      let mut arpa = Arpabet::new();
+      arpa.insert("foo".to_string(), to_strings(vec!["B", "OO"]));
+      arpa.insert("baz".to_string(), to_strings(vec!["B", "AE1", "Z"]));
+      arpa
+    };
+
+    a.merge(&b);
+
+    assert_eq!(a.get_polyphone("foo"), Some(to_strings(vec!["B", "OO"])));
+    assert_eq!(a.get_polyphone("bar"), Some(to_strings(vec!["B", "A1", "R"])));
+    assert_eq!(a.get_polyphone("baz"), Some(to_strings(vec!["B", "AE1", "Z"])));
+    assert_eq!(a.get_polyphone("bin"), None);
   }
 }
