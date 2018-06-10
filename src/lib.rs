@@ -1,5 +1,4 @@
 // TODO:
-// 3. dedup code
 // 4. finalize API
 // 5. strict compiler flags
 // 6. cleanup and release
@@ -12,12 +11,13 @@ extern crate regex;
 
 mod error;
 
-pub use error::ArpabetError;
 use regex::Regex;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::BufRead;
 use std::io::BufReader;
+
+pub use error::ArpabetError;
 
 pub type Word = String;
 pub type Phoneme = String;
@@ -33,7 +33,11 @@ lazy_static! {
   // Regex for reading CMU arpabet, or similarly formatted files.
   // Format resembles the following,
   // ABBREVIATE  AH0 B R IY1 V IY0 EY2 T
-  static ref FILE_REGEX : Regex = Regex::new(r"^([\w\-']+)\s+(.*)\s*$")
+  static ref FILE_REGEX : Regex = Regex::new(r"^([\w\-\(\)\.']+)\s+(.*)\s*$")
+      .expect("Regex is correct.");
+
+  // Comments begin with this preamble.
+  static ref COMMENT_REGEX : Regex = Regex::new(r"^;;;\s+")
       .expect("Regex is correct.");
 }
 
@@ -89,48 +93,6 @@ impl Arpabet {
     }
   }
 
-  fn read_lines(reader: &mut BufRead, map: &mut HashMap<Word, Polyphone>)
-      -> Result<(), ArpabetError> {
-
-    let mut buffer = String::new();
-    let mut line_count = 1;
-
-    while reader.read_line(&mut buffer)? > 0 {
-      match FILE_REGEX.captures(&buffer) {
-        None => {},
-        Some(caps) => {
-
-          let word = match caps.get(1) {
-            None => return Err(ArpabetError::InvalidFormat {
-              line_number: line_count,
-              text: buffer.to_string(),
-            }),
-            Some(m) => m.as_str()
-                .to_lowercase(),
-          };
-
-          let phonemes = match caps.get(2) {
-            None => return Err(ArpabetError::InvalidFormat {
-              line_number: line_count,
-              text: buffer.to_string(),
-            }),
-            Some(m) => m.as_str()
-                .split(" ")
-                .map(|s| s.to_string().to_uppercase())
-                .collect::<Vec<String>>(),
-          };
-
-          map.insert(word, phonemes);
-        },
-      }
-
-      buffer.clear();
-      line_count += 1;
-    }
-
-    Ok(())
-  }
-
   /// Get a polyphone from the dictionary.
   pub fn get_polyphone_ref(&self, word: &str) -> Option<&Polyphone> {
     self.dictionary.get(word)
@@ -167,11 +129,58 @@ impl Arpabet {
   pub fn insert(&mut self, key: Word, value: Polyphone) -> Option<Polyphone> {
     self.dictionary.insert(key, value)
   }
-}
 
-// 1. Core cmudict
-// 2. Read in custom dictionar/ies
-// 3. Merge / layer dictionaries
+  fn read_lines(reader: &mut BufRead, map: &mut HashMap<Word, Polyphone>)
+                -> Result<(), ArpabetError> {
+
+    let mut buffer = String::new();
+    let mut line_count = 1;
+
+    while reader.read_line(&mut buffer)? > 0 {
+      if COMMENT_REGEX.is_match(&buffer) {
+        buffer.clear();
+        line_count += 1;
+        continue;
+      }
+
+      match FILE_REGEX.captures(&buffer) {
+        None => return Err(ArpabetError::InvalidFormat {
+          line_number: line_count,
+          text: buffer.to_string(),
+        }),
+        Some(caps) => {
+
+          let word = match caps.get(1) {
+            None => return Err(ArpabetError::InvalidFormat {
+              line_number: line_count,
+              text: buffer.to_string(),
+            }),
+            Some(m) => m.as_str()
+                .to_lowercase(),
+          };
+
+          let phonemes = match caps.get(2) {
+            None => return Err(ArpabetError::InvalidFormat {
+              line_number: line_count,
+              text: buffer.to_string(),
+            }),
+            Some(m) => m.as_str()
+                .split(" ")
+                .map(|s| s.to_string().to_uppercase())
+                .collect::<Vec<String>>(),
+          };
+
+          map.insert(word, phonemes);
+        },
+      }
+
+      buffer.clear();
+      line_count += 1;
+    }
+
+    Ok(())
+  }
+}
 
 #[cfg(test)]
 mod tests {
@@ -188,6 +197,23 @@ mod tests {
   fn load_from_str() {
     let text = "DOCTOR  D AA1 K T ER0\n\
                 MARIO  M AA1 R IY0 OW0";
+
+    let arpabet = Arpabet::load_from_str(text).expect("Text should load");
+
+    assert_eq!(arpabet.get_polyphone("super"), None);
+
+    assert_eq!(arpabet.get_polyphone("doctor"),
+      Some(to_strings(vec!["D", "AA1", "K", "T","ER0"])));
+
+    assert_eq!(arpabet.get_polyphone("mario"),
+      Some(to_strings(vec!["M", "AA1", "R", "IY0","OW0"])));
+  }
+
+  #[test]
+  fn load_from_str_error() {
+    let text = "DOCTOR  D AA1 K T ER0\n\
+                MARIO  M AA1 R IY0 OW0\n\
+                WAT    ";
 
     let arpabet = Arpabet::load_from_str(text).expect("Text should load");
 

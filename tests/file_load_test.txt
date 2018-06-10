@@ -1,3 +1,3 @@
-" This file is used to test filesystem loading in the module tests.
+;;; This file is used to test filesystem loading in the module tests.
 PIKACHU  P IY1 K AH0 CH UW1
 POKEMON  P OW1 K EY1 AH0 N
