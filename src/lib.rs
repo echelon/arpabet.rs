@@ -61,32 +61,9 @@ impl Arpabet {
   /// [CMUdict](http://www.speech.cs.cmu.edu/cgi-bin/cmudict).
   pub fn load_from_str(text: &str) -> Result<Arpabet, ArpabetError> {
     let mut map = HashMap::new();
+    let mut reader = BufReader::new(text.as_bytes());
 
-    for line in text.lines() {
-      match FILE_REGEX.captures(&line) {
-        None => {},
-        Some(caps) => {
-          let word = match caps.get(1) {
-            None => continue,
-            Some(m) => m.as_str()
-                .to_lowercase(),
-          };
-
-          let phonemes = match caps.get(2) {
-            None => continue,
-            Some(m) => m.as_str()
-                .split(" ")
-                .collect::<Vec<&str>>(),
-          };
-
-          let phonemes = phonemes.iter()
-              .map(|s| s.to_string().to_uppercase())
-              .collect::<Vec<String>>();
-
-          map.insert(word, phonemes);
-        },
-      }
-    }
+    let _r = Arpabet::read_lines(&mut reader, &mut map)?;
 
     if map.is_empty() {
       Err(ArpabetError::EmptyFile)
@@ -101,35 +78,57 @@ impl Arpabet {
   pub fn load_from_file(filename: &str) -> Result<Arpabet, ArpabetError> {
     let f = File::open(filename)?;
     let mut reader = BufReader::new(f);
-
     let mut map = HashMap::new();
-    let mut buffer = String::new();
 
-    while reader.read_line(&mut buffer)? > 0 {
-      match FILE_REGEX.captures(&buffer) {
-        None => {},
-        Some(caps) => {
-          let word_match = caps.get(1);
-          let phonemes_match = caps.get(2);
-
-          if word_match.is_some() && phonemes_match.is_some() {
-            // FIXME: Error handling
-            let word = word_match.unwrap().as_str().to_lowercase();
-            let split = phonemes_match.unwrap().as_str().split(" ");
-            let v1 = split.collect::<Vec<&str>>();
-            let v2 = v1.iter().map(|s| s.to_string()).collect::<Vec<String>>();
-            map.insert(word, v2);
-          }
-        },
-      }
-      buffer.clear();
-    }
+    let _r = Arpabet::read_lines(&mut reader, &mut map)?;
 
     if map.is_empty() {
       Err(ArpabetError::EmptyFile)
     } else {
       Ok(Arpabet { dictionary: map })
     }
+  }
+
+  fn read_lines(reader: &mut BufRead, map: &mut HashMap<Word, Polyphone>)
+      -> Result<(), ArpabetError> {
+
+    let mut buffer = String::new();
+    let mut line_count = 1;
+
+    while reader.read_line(&mut buffer)? > 0 {
+      match FILE_REGEX.captures(&buffer) {
+        None => {},
+        Some(caps) => {
+
+          let word = match caps.get(1) {
+            None => return Err(ArpabetError::InvalidFormat {
+              line_number: line_count,
+              text: buffer.to_string(),
+            }),
+            Some(m) => m.as_str()
+                .to_lowercase(),
+          };
+
+          let phonemes = match caps.get(2) {
+            None => return Err(ArpabetError::InvalidFormat {
+              line_number: line_count,
+              text: buffer.to_string(),
+            }),
+            Some(m) => m.as_str()
+                .split(" ")
+                .map(|s| s.to_string().to_uppercase())
+                .collect::<Vec<String>>(),
+          };
+
+          map.insert(word, phonemes);
+        },
+      }
+
+      buffer.clear();
+      line_count += 1;
+    }
+
+    Ok(())
   }
 
   /// Get a polyphone from the dictionary.
