@@ -1,3 +1,5 @@
+// Copyright (c) 2015, 2018 Brandon Thomas <bt@brand.io>
+
 #![deny(dead_code)]
 #![deny(missing_docs)]
 #![deny(unreachable_patterns)]
@@ -5,9 +7,10 @@
 #![deny(unused_imports)]
 #![deny(unused_qualifications)]
 
-//! Arpabet
-//!
-//!
+//! **Arpabet (_A1 R P AH0 B EH2 T_)**, a library for speech synthesis that
+//! leverages Carnegie Mellon University's _[CMUdict](http://www.speech.cs.cmu.edu/cgi-bin/cmudict)_.
+//! This is a simple library to enable the building of concatenative speech
+//! synthesis engines.
 
 #[macro_use] extern crate lazy_static;
 extern crate regex;
