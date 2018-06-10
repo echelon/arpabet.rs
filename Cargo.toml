@@ -1,7 +1,7 @@
 [package]
 name = "arpabet"
 description = "A library for builing text to speech applications."
-version = "0.1.0"
+version = "0.1.1"
 keywords = [ "TTS", "text", "speech", "CMU" ]
 authors = ["Brandon Thomas <bt@brand.io>",
            "Brandon Thomas <echelon@gmail.com>"]
@@ -16,3 +16,7 @@ regex = "1.0"
 [dev_dependencies]
 chrono = "0.4"
 expectest = "0.10"
+
+[badges]
+travis-ci = { repository = "echelon/arpabet.rs" }
+
