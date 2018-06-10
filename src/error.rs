@@ -2,13 +2,19 @@ use std::error::Error;
 use std::fmt;
 use std::io;
 
+/// Errors for the Arpabet crate.
 #[derive(Debug)]
 pub enum ArpabetError {
+  /// The file or stream being read from was empty.
   EmptyFile,
+  /// The file or stream contained invalid syntax.
   InvalidFormat {
+    /// Line where the error occurred.
     line_number: usize,
+    /// Text of the offending line.
     text: String,
   },
+  /// An error during file IO.
   Io(io::Error),
 }
 

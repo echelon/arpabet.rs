@@ -1,7 +1,13 @@
-// TODO:
-// 4. finalize API
-// 5. strict compiler flags
-// 6. cleanup and release
+#![deny(dead_code)]
+#![deny(missing_docs)]
+#![deny(unreachable_patterns)]
+#![deny(unused_extern_crates)]
+#![deny(unused_imports)]
+#![deny(unused_qualifications)]
+
+//! Arpabet
+//!
+//!
 
 #[macro_use] extern crate lazy_static;
 extern crate regex;
@@ -19,8 +25,13 @@ use std::io::BufReader;
 
 pub use error::ArpabetError;
 
+/// A word is a simple string containing no space characters.
 pub type Word = String;
+
+/// A phoneme is a simple string containing no space characters.
 pub type Phoneme = String;
+
+/// A polyphone is several phonemes read in order.
 pub type Polyphone = Vec<Phoneme>;
 
 const CMU_DICT_TEXT : &'static str = include_str!("../cmudict/cmudict-0.7b");
@@ -41,7 +52,8 @@ lazy_static! {
       .expect("Regex is correct.");
 }
 
-#[derive(Default)]
+/// A dictionary that contains mappings of words to polyphones.
+#[derive(Default, Clone)]
 pub struct Arpabet {
   /// A map of lowercase words to polyphone breakdown (phones are uppercase).
   /// eg. 'jungle' -> [JH, AH1, NG, G, AH0, L]
