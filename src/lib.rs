@@ -40,6 +40,7 @@ pub type Polyphone = Vec<Phoneme>;
 const CMU_DICT_TEXT : &'static str = include_str!("../cmudict/cmudict-0.7b");
 
 lazy_static! {
+  // TODO: When static constexpr are added to Rust, evaluate this at compile time.
   // Lazily cached copy of the entire CMU arpabet.
   static ref CMU_DICT : Arpabet = Arpabet::load_from_str(CMU_DICT_TEXT)
       .expect("CMU dictionary should lazily load.");
@@ -64,11 +65,12 @@ pub struct Arpabet {
 }
 
 impl Arpabet {
-  /// Create a new instance.
+  /// Create an empty Arpabet.
   pub fn new() -> Arpabet {
     Arpabet { dictionary: HashMap::new() }
   }
 
+  // TODO: When static constexpr are added to Rust, evaluate this at compile time.
   /// Loads and caches the CMU Arpabet, which is already present in an unparsed
   /// form in memory.
   pub fn load_cmudict() -> &'static Arpabet {
