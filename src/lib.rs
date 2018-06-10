@@ -33,7 +33,7 @@ lazy_static! {
   // Regex for reading CMU arpabet, or similarly formatted files.
   // Format resembles the following,
   // ABBREVIATE  AH0 B R IY1 V IY0 EY2 T
-  static ref FILE_REGEX : Regex = Regex::new(r"^([\w\-\(\)\.']+)\s+(.*)\s*$")
+  static ref FILE_REGEX : Regex = Regex::new(r"^([\w\-\(\)\.']+)\s+([^\s].*)\s*$")
       .expect("Regex is correct.");
 
   // Comments begin with this preamble.
@@ -118,7 +118,7 @@ impl Arpabet {
   /// Merge the supplied Arpabet into the current one.
   /// Items in the supplied Arpabet override existing entries
   /// should they already exist.
-  pub fn merge(&mut self, other: &Arpabet) {
+  pub fn merge_from(&mut self, other: &Arpabet) {
     for (k, v) in other.dictionary.iter() {
       self.dictionary.insert(k.clone(), v.clone());
     }
@@ -128,6 +128,16 @@ impl Arpabet {
   /// replace it and return the old value.
   pub fn insert(&mut self, key: Word, value: Polyphone) -> Option<Polyphone> {
     self.dictionary.insert(key, value)
+  }
+
+  /// Remove an entry from the arpabet. If it is present, it will be returned.
+  pub fn remove(&mut self, key: &str) -> Option<Polyphone> {
+    self.dictionary.remove(key)
+  }
+
+  /// Reports the number of entries in the arpabet.
+  pub fn len(&self) -> usize {
+    self.dictionary.len()
   }
 
   fn read_lines(reader: &mut BufRead, map: &mut HashMap<Word, Polyphone>)
@@ -169,6 +179,13 @@ impl Arpabet {
                 .map(|s| s.to_string().to_uppercase())
                 .collect::<Vec<String>>(),
           };
+
+          if phonemes.is_empty() {
+            return Err(ArpabetError::InvalidFormat {
+              line_number: line_count,
+              text: buffer.to_string(),
+            });
+          }
 
           map.insert(word, phonemes);
         },
@@ -215,15 +232,16 @@ mod tests {
                 MARIO  M AA1 R IY0 OW0\n\
                 WAT    ";
 
-    let arpabet = Arpabet::load_from_str(text).expect("Text should load");
-
-    assert_eq!(arpabet.get_polyphone("super"), None);
-
-    assert_eq!(arpabet.get_polyphone("doctor"),
-      Some(to_strings(vec!["D", "AA1", "K", "T","ER0"])));
-
-    assert_eq!(arpabet.get_polyphone("mario"),
-      Some(to_strings(vec!["M", "AA1", "R", "IY0","OW0"])));
+    match Arpabet::load_from_str(text) {
+      Ok(_) => panic!("Should have errored."),
+      Err(err) => match err {
+        ArpabetError::InvalidFormat { line_number, text } => {
+          assert_eq!(line_number, 3);
+          assert_eq!(text, "WAT    ");
+        },
+        _ => panic!("Wrong error"),
+      }
+    }
   }
 
   #[test]
@@ -291,6 +309,45 @@ mod tests {
   }
 
   #[test]
+  fn remove() {
+    let mut arpa = Arpabet::new();
+    arpa.insert("foo".to_string(), to_strings(vec!["F", "UW1"]));
+    arpa.insert("boo".to_string(), to_strings(vec!["B", "UW1"]));
+
+    assert_eq!(arpa.get_polyphone("foo"), Some(to_strings(vec!["F", "UW1"])));
+    assert_eq!(arpa.get_polyphone("boo"), Some(to_strings(vec!["B", "UW1"])));
+    assert_eq!(arpa.len(), 2);
+
+    arpa.remove("boo");
+    assert_eq!(arpa.get_polyphone("foo"), Some(to_strings(vec!["F", "UW1"])));
+    assert_eq!(arpa.get_polyphone("boo"), None);
+    assert_eq!(arpa.len(), 1);
+
+    arpa.remove("foo");
+    assert_eq!(arpa.get_polyphone("foo"), None);
+    assert_eq!(arpa.get_polyphone("boo"), None);
+    assert_eq!(arpa.len(), 0);
+  }
+
+  #[test]
+  fn size() {
+    let mut arpa = Arpabet::new();
+    assert_eq!(arpa.len(), 0);
+
+    arpa.insert("foo".to_string(), to_strings(vec!["F", "UW1"]));
+    assert_eq!(arpa.len(), 1);
+
+    arpa.insert("boo".to_string(), to_strings(vec!["B", "UW1"]));
+    assert_eq!(arpa.len(), 2);
+
+    arpa.remove("boo");
+    assert_eq!(arpa.len(), 1);
+
+    arpa.remove("foo");
+    assert_eq!(arpa.len(), 0);
+  }
+
+  #[test]
   fn get_polyphone() {
     let mut a = Arpabet::new();
     a.insert("foo".to_string(), to_strings(vec!["F", "UW1"]));
@@ -330,7 +387,7 @@ mod tests {
   }
 
   #[test]
-  fn merge() {
+  fn merge_from() {
     let mut a = Arpabet::new();
     a.insert("foo".to_string(), to_strings(vec!["F", "UW1"]));
     a.insert("bar".to_string(), to_strings(vec!["B", "A1", "R"]));
@@ -342,7 +399,7 @@ mod tests {
       arpa
     };
 
-    a.merge(&b);
+    a.merge_from(&b);
 
     assert_eq!(a.get_polyphone("foo"), Some(to_strings(vec!["B", "OO"])));
     assert_eq!(a.get_polyphone("bar"), Some(to_strings(vec!["B", "A1", "R"])));
