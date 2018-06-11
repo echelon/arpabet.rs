@@ -1,7 +1,7 @@
 [package]
 name = "arpabet"
 description = "A library for builing text to speech applications."
-version = "0.1.1"
+version = "0.2.0"
 keywords = [ "TTS", "text", "speech", "CMU" ]
 authors = ["Brandon Thomas <bt@brand.io>",
            "Brandon Thomas <echelon@gmail.com>"]
