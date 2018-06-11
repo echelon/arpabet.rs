@@ -34,6 +34,7 @@ mod error;
 
 use regex::Regex;
 use std::collections::HashMap;
+use std::collections::hash_map::Keys;
 use std::fs::File;
 use std::io::BufRead;
 use std::io::BufReader;
@@ -162,6 +163,11 @@ impl Arpabet {
   /// Remove an entry from the arpabet. If it is present, it will be returned.
   pub fn remove(&mut self, key: &str) -> Option<Polyphone> {
     self.dictionary.remove(key)
+  }
+
+  /// Return a keys iterator that walks the keys in random order.
+  pub fn keys(&self) -> Keys<String, Polyphone> {
+    self.dictionary.keys()
   }
 
   /// Reports the number of entries in the arpabet.
@@ -374,6 +380,20 @@ mod tests {
 
     arpa.remove("foo");
     assert_eq!(arpa.len(), 0);
+  }
+
+  #[test]
+  fn keys() {
+    let mut arpa = Arpabet::new();
+    arpa.insert("foo".to_string(), to_strings(vec!["F", "UW1"]));
+    arpa.insert("boo".to_string(), to_strings(vec!["B", "UW1"]));
+
+    let keys: Vec<String> = arpa.keys().cloned().collect();
+    assert_eq!(keys.len(), 2);
+
+    // NB: contains is meh, see: https://github.com/rust-lang/rust/issues/42671
+    assert!(keys.iter().any(|x| x == "foo"));
+    assert!(keys.iter().any(|x| x == "boo"));
   }
 
   #[test]
