@@ -14,6 +14,11 @@ pub enum ArpabetError {
     /// Text of the offending line.
     text: String,
   },
+  /// Failure to parse the input string.
+  StringParseError {
+    /// Text describing the parse failure.
+    description: String,
+  },
   /// An error during file IO.
   Io(io::Error),
 }
@@ -24,6 +29,8 @@ impl fmt::Display for ArpabetError {
       ArpabetError::EmptyFile => write!(f, "The file was empty."),
       ArpabetError::InvalidFormat { ref line_number, ref text } =>
           write!(f, "Invalid format on line {}: {}", line_number, text),
+      ArpabetError::StringParseError { ref description } =>
+          write!(f, "Parse error: {}", description),
       ArpabetError::Io(ref err) => err.fmt(f),
     }
   }
@@ -34,6 +41,7 @@ impl Error for ArpabetError {
     match *self {
       ArpabetError::EmptyFile => "The file was empty.",
       ArpabetError::InvalidFormat { .. } => "Invalid format.",
+      ArpabetError::StringParseError { .. } => "Parse error.",
       ArpabetError::Io(ref err) => err.description(),
     }
   }
@@ -42,6 +50,7 @@ impl Error for ArpabetError {
     match *self {
       ArpabetError::EmptyFile => None,
       ArpabetError::InvalidFormat { .. } => None,
+      ArpabetError::StringParseError { .. } => None,
       ArpabetError::Io(ref err) => Some(err),
     }
   }

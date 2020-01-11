@@ -1,4 +1,4 @@
-// Copyright (c) 2015, 2018 Brandon Thomas <bt@brand.io>
+// Copyright (c) 2015, 2018, 2020 Brandon Thomas <bt@brand.io>
 
 #![deny(dead_code)]
 #![deny(missing_docs)]
@@ -20,17 +20,21 @@
 //!
 //! let arpabet = Arpabet::load_cmudict();
 //!
-//! assert_eq!(arpabet.get_polyphone_ref("test"),
-//!   Some(&vec!["T".into(), "EH1".into(), "S".into(), "T".into()]));
+//! assert_eq!(arpabet.get_polyphone_str("test"),
+//!   Some(vec!["T".into(), "EH1".into(), "S".into(), "T".into()]));
 //! ```
 
 #[macro_use] extern crate lazy_static;
+extern crate phf;
 extern crate regex;
 
 #[cfg(test)] extern crate chrono;
 #[cfg(test)] #[macro_use] extern crate expectest;
 
+mod constants;
 mod error;
+pub mod phoneme;
+pub mod extensions;
 
 use regex::Regex;
 use std::collections::HashMap;
@@ -39,15 +43,19 @@ use std::fs::File;
 use std::io::BufRead;
 use std::io::BufReader;
 
+use phoneme::Phoneme;
+
 pub use error::ArpabetError;
+
+pub use constants::ALL_CONSONANTS;
+pub use constants::ALL_PUNCTUATION;
+pub use constants::ALL_VOWELS;
+pub use constants::PHONEME_MAP;
 
 /// A word is a simple string containing no space characters.
 pub type Word = String;
 
-/// A phoneme is a simple string containing no space characters.
-pub type Phoneme = String;
-
-/// A polyphone is several phonemes read in order.
+/// A polyphone is several phonemes read in order, typically as a single word.
 pub type Polyphone = Vec<Phoneme>;
 
 const CMU_DICT_TEXT : &'static str = include_str!("../cmudict/cmudict-0.7b");
@@ -72,15 +80,17 @@ lazy_static! {
 /// A dictionary that contains mappings of words to polyphones.
 #[derive(Default, Clone)]
 pub struct Arpabet {
-  /// A map of lowercase words to polyphone breakdown (phones are uppercase).
+  /// A map of lowercase words to polyphone breakdown.
   /// eg. 'jungle' -> [JH, AH1, NG, G, AH0, L]
-  dictionary: HashMap<Word, Polyphone>
+  dictionary: HashMap<Word, Polyphone>,
 }
 
 impl Arpabet {
   /// Create an empty Arpabet.
   pub fn new() -> Arpabet {
-    Arpabet { dictionary: HashMap::new() }
+    Arpabet {
+      dictionary: HashMap::new(),
+    }
   }
 
   // TODO: When static constexpr are added to Rust, evaluate this at compile time.
@@ -124,15 +134,27 @@ impl Arpabet {
   }
 
   /// Get a polyphone from the dictionary.
+  pub fn get_polyphone(&self, word: &str) -> Option<Polyphone> {
+    self.dictionary.get(word).and_then(|p| {
+      Some(p.iter()
+          .map(|p| p.clone())
+          .collect::<Vec<Phoneme>>())
+    })
+  }
+
+  /// Get a polyphone from the dictionary.
   pub fn get_polyphone_ref(&self, word: &str) -> Option<&Polyphone> {
     self.dictionary.get(word)
   }
 
   /// Get a polyphone from the dictionary.
-  pub fn get_polyphone(&self, word: &str) -> Option<Polyphone> {
-    self.dictionary.get(word).and_then(|p| {
-      Some(p.iter().map(|s| s.to_string()).collect::<Vec<String>>())
-    })
+  pub fn get_polyphone_str(&self, word: &str) -> Option<Vec<&'static str>> {
+    self.dictionary.get(word)
+        .map(|polyphone| {
+          polyphone.iter()
+              .map(|phoneme| phoneme.to_str())
+              .collect()
+        })
   }
 
   /// Combine two Arpabets and return the result.
@@ -156,17 +178,17 @@ impl Arpabet {
 
   /// Insert an entry into the Arpabet. If the entry is already present,
   /// replace it and return the old value.
-  pub fn insert(&mut self, key: Word, value: Polyphone) -> Option<Polyphone> {
+  pub fn insert(&mut self, key: Word, value: Vec<Phoneme>) -> Option<Vec<Phoneme>> {
     self.dictionary.insert(key, value)
   }
 
   /// Remove an entry from the arpabet. If it is present, it will be returned.
-  pub fn remove(&mut self, key: &str) -> Option<Polyphone> {
+  pub fn remove(&mut self, key: &str) -> Option<Vec<Phoneme>> {
     self.dictionary.remove(key)
   }
 
   /// Return a keys iterator that walks the keys in random order.
-  pub fn keys(&self) -> Keys<String, Polyphone> {
+  pub fn keys(&self) -> Keys<String, Vec<Phoneme>> {
     self.dictionary.keys()
   }
 
@@ -175,7 +197,7 @@ impl Arpabet {
     self.dictionary.len()
   }
 
-  fn read_lines(reader: &mut BufRead, map: &mut HashMap<Word, Polyphone>)
+  fn read_lines(reader: &mut BufRead, map: &mut HashMap<Word, Vec<Phoneme>>)
                 -> Result<(), ArpabetError> {
 
     let mut buffer = String::new();
@@ -204,7 +226,7 @@ impl Arpabet {
                 .to_lowercase(),
           };
 
-          let phonemes = match caps.get(2) {
+          let phoneme_tokens = match caps.get(2) {
             None => return Err(ArpabetError::InvalidFormat {
               line_number: line_count,
               text: buffer.to_string(),
@@ -215,11 +237,25 @@ impl Arpabet {
                 .collect::<Vec<String>>(),
           };
 
-          if phonemes.is_empty() {
+          if phoneme_tokens.is_empty() {
             return Err(ArpabetError::InvalidFormat {
               line_number: line_count,
               text: buffer.to_string(),
             });
+          }
+
+          let mut phonemes = Vec::new();
+
+          for token in phoneme_tokens {
+            match PHONEME_MAP.get(token.as_str()) {
+              None => {
+                return Err(ArpabetError::InvalidFormat {
+                  line_number: line_count,
+                  text: buffer.to_string(),
+                });
+              },
+              Some(phoneme) => phonemes.push(phoneme.clone()),
+            }
           }
 
           map.insert(word, phonemes);
@@ -241,9 +277,11 @@ mod tests {
 
   use super::*;
 
-  fn to_strings(strs: Vec<&str>) -> Vec<String> {
-    strs.iter().map(|s| s.to_string()).collect()
-  }
+  use phoneme::{
+    Consonant,
+    Vowel,
+    VowelStress,
+  };
 
   #[test]
   fn load_from_str() {
@@ -252,13 +290,13 @@ mod tests {
 
     let arpabet = Arpabet::load_from_str(text).expect("Text should load");
 
-    assert_eq!(arpabet.get_polyphone("super"), None);
+    assert_eq!(arpabet.get_polyphone_str("super"), None);
 
-    assert_eq!(arpabet.get_polyphone("doctor"),
-      Some(to_strings(vec!["D", "AA1", "K", "T","ER0"])));
+    assert_eq!(arpabet.get_polyphone_str("doctor"),
+      Some(vec!["D", "AA1", "K", "T","ER0"]));
 
-    assert_eq!(arpabet.get_polyphone("mario"),
-      Some(to_strings(vec!["M", "AA1", "R", "IY0","OW0"])));
+    assert_eq!(arpabet.get_polyphone_str("mario"),
+      Some(vec!["M", "AA1", "R", "IY0","OW0"]));
   }
 
   #[test]
@@ -284,31 +322,31 @@ mod tests {
     let arpabet = Arpabet::load_from_file("./tests/file_load_test.txt")
         .expect("File should load");
 
-    assert_eq!(arpabet.get_polyphone("pokemon"),
-      Some(to_strings(vec!["P", "OW1", "K", "EY1", "AH0", "N"])));
+    assert_eq!(arpabet.get_polyphone_str("pokemon"),
+      Some(vec!["P", "OW1", "K", "EY1", "AH0", "N"]));
 
-    assert_eq!(arpabet.get_polyphone("pikachu"),
-      Some(to_strings(vec!["P", "IY1", "K", "AH0", "CH", "UW1"])));
+    assert_eq!(arpabet.get_polyphone_str("pikachu"),
+      Some(vec!["P", "IY1", "K", "AH0", "CH", "UW1"]));
 
-    assert_eq!(arpabet.get_polyphone("bulbasaur"), None);
+    assert_eq!(arpabet.get_polyphone_str("bulbasaur"), None);
   }
 
   #[test]
   fn load_cmudict() {
     let arpabet = Arpabet::load_cmudict();
 
-    assert_eq!(arpabet.get_polyphone("game"),
-      Some(to_strings(vec!["G", "EY1", "M"])));
+    assert_eq!(arpabet.get_polyphone_str("game"),
+      Some(vec!["G", "EY1", "M"]));
 
-    assert_eq!(arpabet.get_polyphone("boy"),
-      Some(to_strings(vec!["B", "OY1"])));
+    assert_eq!(arpabet.get_polyphone_str("boy"),
+      Some(vec!["B", "OY1"]));
 
-    assert_eq!(arpabet.get_polyphone("advance"),
-      Some(to_strings(vec!["AH0", "D", "V", "AE1", "N", "S"])));
+    assert_eq!(arpabet.get_polyphone_str("advance"),
+      Some(vec!["AH0", "D", "V", "AE1", "N", "S"]));
 
-    assert_eq!(arpabet.get_polyphone("sp"), None);
+    assert_eq!(arpabet.get_polyphone_str("sp"), None);
 
-    assert_eq!(arpabet.get_polyphone("ZZZZZ"), None);
+    assert_eq!(arpabet.get_polyphone_str("ZZZZZ"), None);
   }
 
   #[test]
@@ -321,8 +359,8 @@ mod tests {
       // This should be cached...
       let arpabet = Arpabet::load_cmudict();
 
-      assert_eq!(arpabet.get_polyphone("yep"),
-        Some(to_strings(vec!["Y", "EH1", "P"])));
+      assert_eq!(arpabet.get_polyphone_str("yep"),
+        Some(vec!["Y", "EH1", "P"]));
     }
 
     let end = Utc::now();
@@ -333,28 +371,57 @@ mod tests {
   #[test]
   fn insert() {
     let mut arpa = Arpabet::new();
-    arpa.insert("foo".to_string(), to_strings(vec!["F", "UW1"]));
+    arpa.insert("foo".to_string(), vec![
+      Phoneme::Consonant(Consonant::F),
+      Phoneme::Vowel(Vowel::UW(VowelStress::PrimaryStress)),
+    ]);
 
-    assert_eq!(arpa.get_polyphone("foo"), Some(to_strings(vec!["F", "UW1"])));
+    assert_eq!(arpa.get_polyphone("foo"), Some(vec![
+      Phoneme::Consonant(Consonant::F),
+      Phoneme::Vowel(Vowel::UW(VowelStress::PrimaryStress))],
+    ));
+
     assert_eq!(arpa.get_polyphone("bar"), None);
 
-    arpa.insert("foo".to_string(), to_strings(vec!["B", "UW1"]));
+    arpa.insert("foo".to_string(), vec![
+      Phoneme::Consonant(Consonant::B),
+      Phoneme::Vowel(Vowel::UW(VowelStress::PrimaryStress)),
+    ]);
 
-    assert_eq!(arpa.get_polyphone("foo"), Some(to_strings(vec!["B", "UW1"])));
+    assert_eq!(arpa.get_polyphone("foo"), Some(vec![
+      Phoneme::Consonant(Consonant::B),
+      Phoneme::Vowel(Vowel::UW(VowelStress::PrimaryStress))],
+    ));
   }
 
   #[test]
   fn remove() {
     let mut arpa = Arpabet::new();
-    arpa.insert("foo".to_string(), to_strings(vec!["F", "UW1"]));
-    arpa.insert("boo".to_string(), to_strings(vec!["B", "UW1"]));
+    arpa.insert("foo".to_string(), vec![
+      Phoneme::Consonant(Consonant::F),
+      Phoneme::Vowel(Vowel::UW(VowelStress::PrimaryStress)),
+    ]);
 
-    assert_eq!(arpa.get_polyphone("foo"), Some(to_strings(vec!["F", "UW1"])));
-    assert_eq!(arpa.get_polyphone("boo"), Some(to_strings(vec!["B", "UW1"])));
+    arpa.insert("boo".to_string(), vec![
+      Phoneme::Consonant(Consonant::B),
+      Phoneme::Vowel(Vowel::UW(VowelStress::PrimaryStress)),
+    ]);
+
+    assert_eq!(arpa.get_polyphone("foo"), Some(vec![
+      Phoneme::Consonant(Consonant::F),
+      Phoneme::Vowel(Vowel::UW(VowelStress::PrimaryStress))],
+    ));
+    assert_eq!(arpa.get_polyphone("boo"), Some(vec![
+      Phoneme::Consonant(Consonant::B),
+      Phoneme::Vowel(Vowel::UW(VowelStress::PrimaryStress))],
+    ));
     assert_eq!(arpa.len(), 2);
 
     arpa.remove("boo");
-    assert_eq!(arpa.get_polyphone("foo"), Some(to_strings(vec!["F", "UW1"])));
+    assert_eq!(arpa.get_polyphone("foo"), Some(vec![
+      Phoneme::Consonant(Consonant::F),
+      Phoneme::Vowel(Vowel::UW(VowelStress::PrimaryStress))],
+    ));
     assert_eq!(arpa.get_polyphone("boo"), None);
     assert_eq!(arpa.len(), 1);
 
@@ -369,10 +436,18 @@ mod tests {
     let mut arpa = Arpabet::new();
     assert_eq!(arpa.len(), 0);
 
-    arpa.insert("foo".to_string(), to_strings(vec!["F", "UW1"]));
+    arpa.insert("foo".to_string(), vec![
+      Phoneme::Consonant(Consonant::F),
+      Phoneme::Vowel(Vowel::UW(VowelStress::PrimaryStress)),
+    ]);
+
     assert_eq!(arpa.len(), 1);
 
-    arpa.insert("boo".to_string(), to_strings(vec!["B", "UW1"]));
+    arpa.insert("boo".to_string(), vec![
+      Phoneme::Consonant(Consonant::B),
+      Phoneme::Vowel(Vowel::UW(VowelStress::PrimaryStress)),
+    ]);
+
     assert_eq!(arpa.len(), 2);
 
     arpa.remove("boo");
@@ -385,8 +460,14 @@ mod tests {
   #[test]
   fn keys() {
     let mut arpa = Arpabet::new();
-    arpa.insert("foo".to_string(), to_strings(vec!["F", "UW1"]));
-    arpa.insert("boo".to_string(), to_strings(vec!["B", "UW1"]));
+    arpa.insert("foo".to_string(), vec![
+      Phoneme::Consonant(Consonant::F),
+      Phoneme::Vowel(Vowel::UW(VowelStress::PrimaryStress)),
+    ]);
+    arpa.insert("boo".to_string(), vec![
+      Phoneme::Consonant(Consonant::B),
+      Phoneme::Vowel(Vowel::UW(VowelStress::PrimaryStress)),
+    ]);
 
     let keys: Vec<String> = arpa.keys().cloned().collect();
     assert_eq!(keys.len(), 2);
@@ -399,16 +480,39 @@ mod tests {
   #[test]
   fn get_polyphone() {
     let mut a = Arpabet::new();
-    a.insert("foo".to_string(), to_strings(vec!["F", "UW1"]));
-    assert_eq!(a.get_polyphone("foo"), Some(to_strings(vec!["F", "UW1"])));
+    a.insert("foo".to_string(), vec![
+      Phoneme::Consonant(Consonant::F),
+      Phoneme::Vowel(Vowel::UW(VowelStress::PrimaryStress)),
+    ]);
+    assert_eq!(a.get_polyphone("foo"), Some(vec![
+      Phoneme::Consonant(Consonant::F),
+      Phoneme::Vowel(Vowel::UW(VowelStress::PrimaryStress))],
+    ));
     assert_eq!(a.get_polyphone("bar"), None);
+  }
+
+  #[test]
+  fn get_polyphone_str() {
+    let mut a = Arpabet::new();
+    a.insert("foo".to_string(), vec![
+      Phoneme::Consonant(Consonant::F),
+      Phoneme::Vowel(Vowel::UW(VowelStress::PrimaryStress)),
+    ]);
+    assert_eq!(a.get_polyphone_str("foo"), Some(vec!["F", "UW1"]));
+    assert_eq!(a.get_polyphone_str("bar"), None);
   }
 
   #[test]
   fn get_polyphone_ref() {
     let mut a = Arpabet::new();
-    a.insert("foo".to_string(), to_strings(vec!["F", "UW1"]));
-    assert_eq!(a.get_polyphone_ref("foo"), Some(&to_strings(vec!["F", "UW1"])));
+    a.insert("foo".to_string(), vec![
+      Phoneme::Consonant(Consonant::F),
+      Phoneme::Vowel(Vowel::UW(VowelStress::PrimaryStress)),
+    ]);
+    assert_eq!(a.get_polyphone_ref("foo"), Some(&vec![
+      Phoneme::Consonant(Consonant::F),
+      Phoneme::Vowel(Vowel::UW(VowelStress::PrimaryStress))],
+    ));
     assert_eq!(a.get_polyphone_ref("bar"), None);
   }
 
@@ -416,43 +520,93 @@ mod tests {
   fn combine() {
     let a = {
       let mut arpa = Arpabet::new();
-      arpa.insert("foo".to_string(), to_strings(vec!["F", "UW1"]));
-      arpa.insert("bar".to_string(), to_strings(vec!["B", "A1", "R"]));
+      arpa.insert("foo".to_string(), vec![
+        Phoneme::Consonant(Consonant::F),
+        Phoneme::Vowel(Vowel::UW(VowelStress::PrimaryStress)),
+      ]);
+      arpa.insert("bar".to_string(), vec![
+        Phoneme::Consonant(Consonant::B),
+        Phoneme::Vowel(Vowel::AA(VowelStress::PrimaryStress)),
+        Phoneme::Consonant(Consonant::R),
+      ]);
       arpa
     };
     let b = {
       let mut arpa = Arpabet::new();
-      arpa.insert("foo".to_string(), to_strings(vec!["B", "OO"]));
-      arpa.insert("baz".to_string(), to_strings(vec!["B", "AE1", "Z"]));
+      arpa.insert("foo".to_string(), vec![
+        Phoneme::Consonant(Consonant::B),
+        Phoneme::Vowel(Vowel::UW(VowelStress::PrimaryStress)),
+      ]);
+      arpa.insert("baz".to_string(), vec![
+        Phoneme::Consonant(Consonant::B),
+        Phoneme::Vowel(Vowel::AE(VowelStress::PrimaryStress)),
+        Phoneme::Consonant(Consonant::Z),
+      ]);
       arpa
     };
 
     let c = a.combine(&b);
 
-    assert_eq!(c.get_polyphone("foo"), Some(to_strings(vec!["B", "OO"])));
-    assert_eq!(c.get_polyphone("bar"), Some(to_strings(vec!["B", "A1", "R"])));
-    assert_eq!(c.get_polyphone("baz"), Some(to_strings(vec!["B", "AE1", "Z"])));
+    assert_eq!(c.get_polyphone("foo"), Some(vec![
+        Phoneme::Consonant(Consonant::B),
+        Phoneme::Vowel(Vowel::UW(VowelStress::PrimaryStress)),
+      ]));
+    assert_eq!(c.get_polyphone("bar"), Some(vec![
+        Phoneme::Consonant(Consonant::B),
+        Phoneme::Vowel(Vowel::AA(VowelStress::PrimaryStress)),
+        Phoneme::Consonant(Consonant::R),
+      ]));
+    assert_eq!(c.get_polyphone("baz"), Some(vec![
+        Phoneme::Consonant(Consonant::B),
+        Phoneme::Vowel(Vowel::AE(VowelStress::PrimaryStress)),
+        Phoneme::Consonant(Consonant::Z),
+      ]));
     assert_eq!(c.get_polyphone("bin"), None);
   }
 
   #[test]
   fn merge_from() {
     let mut a = Arpabet::new();
-    a.insert("foo".to_string(), to_strings(vec!["F", "UW1"]));
-    a.insert("bar".to_string(), to_strings(vec!["B", "A1", "R"]));
+    a.insert("foo".to_string(), vec![
+      Phoneme::Consonant(Consonant::F),
+      Phoneme::Vowel(Vowel::UW(VowelStress::PrimaryStress)),
+    ]);
+    a.insert("bar".to_string(), vec![
+      Phoneme::Consonant(Consonant::B),
+      Phoneme::Vowel(Vowel::AA(VowelStress::PrimaryStress)),
+      Phoneme::Consonant(Consonant::R),
+    ]);
 
     let b = {
       let mut arpa = Arpabet::new();
-      arpa.insert("foo".to_string(), to_strings(vec!["B", "OO"]));
-      arpa.insert("baz".to_string(), to_strings(vec!["B", "AE1", "Z"]));
+      arpa.insert("foo".to_string(), vec![
+        Phoneme::Consonant(Consonant::B),
+        Phoneme::Vowel(Vowel::UW(VowelStress::PrimaryStress)),
+      ]);
+      arpa.insert("baz".to_string(), vec![
+        Phoneme::Consonant(Consonant::B),
+        Phoneme::Vowel(Vowel::AE(VowelStress::PrimaryStress)),
+        Phoneme::Consonant(Consonant::Z),
+      ]);
       arpa
     };
 
     a.merge_from(&b);
 
-    assert_eq!(a.get_polyphone("foo"), Some(to_strings(vec!["B", "OO"])));
-    assert_eq!(a.get_polyphone("bar"), Some(to_strings(vec!["B", "A1", "R"])));
-    assert_eq!(a.get_polyphone("baz"), Some(to_strings(vec!["B", "AE1", "Z"])));
+    assert_eq!(a.get_polyphone("foo"), Some(vec![
+      Phoneme::Consonant(Consonant::B),
+      Phoneme::Vowel(Vowel::UW(VowelStress::PrimaryStress)),
+    ]));
+    assert_eq!(a.get_polyphone("bar"), Some(vec![
+      Phoneme::Consonant(Consonant::B),
+      Phoneme::Vowel(Vowel::AA(VowelStress::PrimaryStress)),
+      Phoneme::Consonant(Consonant::R),
+    ]));
+    assert_eq!(a.get_polyphone("baz"), Some(vec![
+      Phoneme::Consonant(Consonant::B),
+      Phoneme::Vowel(Vowel::AE(VowelStress::PrimaryStress)),
+      Phoneme::Consonant(Consonant::Z),
+    ]));
     assert_eq!(a.get_polyphone("bin"), None);
   }
 }
