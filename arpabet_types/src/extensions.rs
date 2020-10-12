@@ -1,6 +1,6 @@
 //! This module contains a few non-standard tokens and mappings that are not declared in CMUDict.
 
-use phoneme::{
+use crate::phoneme::{
   Consonant,
   Phoneme,
   Vowel,
@@ -270,7 +270,7 @@ impl From<Vowel> for u8 {
 
 #[cfg(test)]
 mod tests {
-  use constants::{ALL_CONSONANTS, ALL_VOWELS};
+  use crate::constants::{ALL_CONSONANTS, ALL_VOWELS};
   use expectest::prelude::*;
   use super::*;
 

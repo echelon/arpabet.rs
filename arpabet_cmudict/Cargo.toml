@@ -1,0 +1,31 @@
+[package]
+name = "arpabet_cmudict"
+description = "Parser for the arpabet crate. Do not use directly."
+version = "2.0.0"
+keywords = [ "TTS", "text", "speech", "CMU", "cmudict" ]
+authors = ["Brandon Thomas <bt@brand.io>",
+    "Brandon Thomas <echelon@gmail.com>"]
+license = "BSD-4-Clause"
+repository = "https://github.com/echelon/arpabet.rs"
+documentation = "https://docs.rs/arpabet"
+
+[dependencies]
+arpabet_parser = { version = "2.0.0", optional = false, path = "../arpabet_parser" }
+arpabet_types = { version = "2.0.0", optional = false, path = "../arpabet_types" }
+lazy_static = "1.0"
+phf = { version = "0.8", features = ["macros"] }
+regex = "1.0"
+
+[dev_dependencies]
+chrono = "0.4"
+expectest = "0.10"
+phf_codegen = "0.8.0"
+
+[build_dependencies]
+arpabet_parser = { version = "2.0.0", optional = false, path = "../arpabet_parser" }
+arpabet_types = { version = "2.0.0", optional = false, path = "../arpabet_types" }
+lazy_static = "1.0"
+phf_codegen = "0.8.0"
+
+[badges]
+travis-ci = { repository = "echelon/arpabet.rs" }

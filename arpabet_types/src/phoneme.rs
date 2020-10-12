@@ -1,7 +1,7 @@
 //! This module defines the various phonemes in the ARPABET.
 
-use constants::PHONEME_MAP;
-use error::ArpabetError;
+use crate::constants::PHONEME_MAP;
+use crate::error::ArpabetError;
 use std::convert::TryFrom;
 
 /// Consonants in ARPABET.
@@ -205,6 +205,31 @@ impl Vowel {
     }
   }
 
+  /// Get the string representation of the vowel phoneme, without the stress.
+  pub fn to_str_stressless(&self) -> &'static str {
+    match self {
+      Vowel::AA(_) => "AA",
+      Vowel::AE(_) => "AE",
+      Vowel::AH(_) => "AH",
+      Vowel::AO(_) => "AO",
+      Vowel::AW(_) => "AW",
+      Vowel::AX(_) => "AX",
+      Vowel::AXR(_) => "AXR",
+      Vowel::AY(_) => "AY",
+      Vowel::EH(_) => "EH",
+      Vowel::ER(_) => "ER",
+      Vowel::EY(_) => "EY",
+      Vowel::IH(_) => "IH",
+      Vowel::IX(_) => "IX",
+      Vowel::IY(_) => "IY",
+      Vowel::OW(_) => "OW",
+      Vowel::OY(_) => "OY",
+      Vowel::UH(_) => "UH",
+      Vowel::UW(_) => "UW",
+      Vowel::UX(_) => "UX",
+    }
+  }
+
   /// Get the string representation of the vowel phoneme.
   pub fn to_str(&self) -> &'static str {
     match self {
@@ -360,7 +385,7 @@ impl TryFrom<&str> for Phoneme {
 
 #[cfg(test)]
 mod tests {
-  use constants::ALL_VOWELS;
+  use crate::constants::ALL_VOWELS;
   use expectest::prelude::*;
   use super::*;
 
@@ -477,6 +502,86 @@ mod tests {
     expect!(Vowel::UX(VowelStress::NoStress).to_str()).to(be_eq("UX0"));
     expect!(Vowel::UX(VowelStress::PrimaryStress).to_str()).to(be_eq("UX1"));
     expect!(Vowel::UX(VowelStress::SecondaryStress).to_str()).to(be_eq("UX2"));
+  }
+
+  #[test]
+  fn vowel_to_str_stressless() {
+    expect!(Vowel::AA(VowelStress::UnknownStress).to_str_stressless()).to(be_eq("AA"));
+    expect!(Vowel::AA(VowelStress::NoStress).to_str_stressless()).to(be_eq("AA"));
+    expect!(Vowel::AA(VowelStress::PrimaryStress).to_str_stressless()).to(be_eq("AA"));
+    expect!(Vowel::AA(VowelStress::SecondaryStress).to_str_stressless()).to(be_eq("AA"));
+    expect!(Vowel::AE(VowelStress::UnknownStress).to_str_stressless()).to(be_eq("AE"));
+    expect!(Vowel::AE(VowelStress::NoStress).to_str_stressless()).to(be_eq("AE"));
+    expect!(Vowel::AE(VowelStress::PrimaryStress).to_str_stressless()).to(be_eq("AE"));
+    expect!(Vowel::AE(VowelStress::SecondaryStress).to_str_stressless()).to(be_eq("AE"));
+    expect!(Vowel::AH(VowelStress::UnknownStress).to_str_stressless()).to(be_eq("AH"));
+    expect!(Vowel::AH(VowelStress::NoStress).to_str_stressless()).to(be_eq("AH"));
+    expect!(Vowel::AH(VowelStress::PrimaryStress).to_str_stressless()).to(be_eq("AH"));
+    expect!(Vowel::AH(VowelStress::SecondaryStress).to_str_stressless()).to(be_eq("AH"));
+    expect!(Vowel::AO(VowelStress::UnknownStress).to_str_stressless()).to(be_eq("AO"));
+    expect!(Vowel::AO(VowelStress::NoStress).to_str_stressless()).to(be_eq("AO"));
+    expect!(Vowel::AO(VowelStress::PrimaryStress).to_str_stressless()).to(be_eq("AO"));
+    expect!(Vowel::AO(VowelStress::SecondaryStress).to_str_stressless()).to(be_eq("AO"));
+    expect!(Vowel::AW(VowelStress::UnknownStress).to_str_stressless()).to(be_eq("AW"));
+    expect!(Vowel::AW(VowelStress::NoStress).to_str_stressless()).to(be_eq("AW"));
+    expect!(Vowel::AW(VowelStress::PrimaryStress).to_str_stressless()).to(be_eq("AW"));
+    expect!(Vowel::AW(VowelStress::SecondaryStress).to_str_stressless()).to(be_eq("AW"));
+    expect!(Vowel::AX(VowelStress::UnknownStress).to_str_stressless()).to(be_eq("AX"));
+    expect!(Vowel::AX(VowelStress::NoStress).to_str_stressless()).to(be_eq("AX"));
+    expect!(Vowel::AX(VowelStress::PrimaryStress).to_str_stressless()).to(be_eq("AX"));
+    expect!(Vowel::AX(VowelStress::SecondaryStress).to_str_stressless()).to(be_eq("AX"));
+    expect!(Vowel::AXR(VowelStress::UnknownStress).to_str_stressless()).to(be_eq("AXR"));
+    expect!(Vowel::AXR(VowelStress::NoStress).to_str_stressless()).to(be_eq("AXR"));
+    expect!(Vowel::AXR(VowelStress::PrimaryStress).to_str_stressless()).to(be_eq("AXR"));
+    expect!(Vowel::AXR(VowelStress::SecondaryStress).to_str_stressless()).to(be_eq("AXR"));
+    expect!(Vowel::AY(VowelStress::UnknownStress).to_str_stressless()).to(be_eq("AY"));
+    expect!(Vowel::AY(VowelStress::NoStress).to_str_stressless()).to(be_eq("AY"));
+    expect!(Vowel::AY(VowelStress::PrimaryStress).to_str_stressless()).to(be_eq("AY"));
+    expect!(Vowel::AY(VowelStress::SecondaryStress).to_str_stressless()).to(be_eq("AY"));
+    expect!(Vowel::EH(VowelStress::UnknownStress).to_str_stressless()).to(be_eq("EH"));
+    expect!(Vowel::EH(VowelStress::NoStress).to_str_stressless()).to(be_eq("EH"));
+    expect!(Vowel::EH(VowelStress::PrimaryStress).to_str_stressless()).to(be_eq("EH"));
+    expect!(Vowel::EH(VowelStress::SecondaryStress).to_str_stressless()).to(be_eq("EH"));
+    expect!(Vowel::ER(VowelStress::UnknownStress).to_str_stressless()).to(be_eq("ER"));
+    expect!(Vowel::ER(VowelStress::NoStress).to_str_stressless()).to(be_eq("ER"));
+    expect!(Vowel::ER(VowelStress::PrimaryStress).to_str_stressless()).to(be_eq("ER"));
+    expect!(Vowel::ER(VowelStress::SecondaryStress).to_str_stressless()).to(be_eq("ER"));
+    expect!(Vowel::EY(VowelStress::UnknownStress).to_str_stressless()).to(be_eq("EY"));
+    expect!(Vowel::EY(VowelStress::NoStress).to_str_stressless()).to(be_eq("EY"));
+    expect!(Vowel::EY(VowelStress::PrimaryStress).to_str_stressless()).to(be_eq("EY"));
+    expect!(Vowel::EY(VowelStress::SecondaryStress).to_str_stressless()).to(be_eq("EY"));
+    expect!(Vowel::IH(VowelStress::UnknownStress).to_str_stressless()).to(be_eq("IH"));
+    expect!(Vowel::IH(VowelStress::NoStress).to_str_stressless()).to(be_eq("IH"));
+    expect!(Vowel::IH(VowelStress::PrimaryStress).to_str_stressless()).to(be_eq("IH"));
+    expect!(Vowel::IH(VowelStress::SecondaryStress).to_str_stressless()).to(be_eq("IH"));
+    expect!(Vowel::IX(VowelStress::UnknownStress).to_str_stressless()).to(be_eq("IX"));
+    expect!(Vowel::IX(VowelStress::NoStress).to_str_stressless()).to(be_eq("IX"));
+    expect!(Vowel::IX(VowelStress::PrimaryStress).to_str_stressless()).to(be_eq("IX"));
+    expect!(Vowel::IX(VowelStress::SecondaryStress).to_str_stressless()).to(be_eq("IX"));
+    expect!(Vowel::IY(VowelStress::UnknownStress).to_str_stressless()).to(be_eq("IY"));
+    expect!(Vowel::IY(VowelStress::NoStress).to_str_stressless()).to(be_eq("IY"));
+    expect!(Vowel::IY(VowelStress::PrimaryStress).to_str_stressless()).to(be_eq("IY"));
+    expect!(Vowel::IY(VowelStress::SecondaryStress).to_str_stressless()).to(be_eq("IY"));
+    expect!(Vowel::OW(VowelStress::UnknownStress).to_str_stressless()).to(be_eq("OW"));
+    expect!(Vowel::OW(VowelStress::NoStress).to_str_stressless()).to(be_eq("OW"));
+    expect!(Vowel::OW(VowelStress::PrimaryStress).to_str_stressless()).to(be_eq("OW"));
+    expect!(Vowel::OW(VowelStress::SecondaryStress).to_str_stressless()).to(be_eq("OW"));
+    expect!(Vowel::OY(VowelStress::UnknownStress).to_str_stressless()).to(be_eq("OY"));
+    expect!(Vowel::OY(VowelStress::NoStress).to_str_stressless()).to(be_eq("OY"));
+    expect!(Vowel::OY(VowelStress::PrimaryStress).to_str_stressless()).to(be_eq("OY"));
+    expect!(Vowel::OY(VowelStress::SecondaryStress).to_str_stressless()).to(be_eq("OY"));
+    expect!(Vowel::UH(VowelStress::UnknownStress).to_str_stressless()).to(be_eq("UH"));
+    expect!(Vowel::UH(VowelStress::NoStress).to_str_stressless()).to(be_eq("UH"));
+    expect!(Vowel::UH(VowelStress::PrimaryStress).to_str_stressless()).to(be_eq("UH"));
+    expect!(Vowel::UH(VowelStress::SecondaryStress).to_str_stressless()).to(be_eq("UH"));
+    expect!(Vowel::UW(VowelStress::UnknownStress).to_str_stressless()).to(be_eq("UW"));
+    expect!(Vowel::UW(VowelStress::NoStress).to_str_stressless()).to(be_eq("UW"));
+    expect!(Vowel::UW(VowelStress::PrimaryStress).to_str_stressless()).to(be_eq("UW"));
+    expect!(Vowel::UW(VowelStress::SecondaryStress).to_str_stressless()).to(be_eq("UW"));
+    expect!(Vowel::UX(VowelStress::UnknownStress).to_str_stressless()).to(be_eq("UX"));
+    expect!(Vowel::UX(VowelStress::NoStress).to_str_stressless()).to(be_eq("UX"));
+    expect!(Vowel::UX(VowelStress::PrimaryStress).to_str_stressless()).to(be_eq("UX"));
+    expect!(Vowel::UX(VowelStress::SecondaryStress).to_str_stressless()).to(be_eq("UX"));
   }
 
   #[test]
