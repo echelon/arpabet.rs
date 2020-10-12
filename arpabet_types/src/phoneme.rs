@@ -1,7 +1,7 @@
 //! This module defines the various phonemes in the ARPABET.
 
-use constants::PHONEME_MAP;
-use error::ArpabetError;
+use crate::constants::PHONEME_MAP;
+use crate::error::ArpabetError;
 use std::convert::TryFrom;
 
 /// Consonants in ARPABET.
@@ -205,6 +205,31 @@ impl Vowel {
     }
   }
 
+  /// Get the string representation of the vowel phoneme, without the stress.
+  pub fn to_str_stressless(&self) -> &'static str {
+    match self {
+      Vowel::AA(_) => "AA",
+      Vowel::AE(_) => "AE",
+      Vowel::AH(_) => "AH",
+      Vowel::AO(_) => "AO",
+      Vowel::AW(_) => "AW",
+      Vowel::AX(_) => "AX",
+      Vowel::AXR(_) => "AXR",
+      Vowel::AY(_) => "AY",
+      Vowel::EH(_) => "EH",
+      Vowel::ER(_) => "ER",
+      Vowel::EY(_) => "EY",
+      Vowel::IH(_) => "IH",
+      Vowel::IX(_) => "IX",
+      Vowel::IY(_) => "IY",
+      Vowel::OW(_) => "OW",
+      Vowel::OY(_) => "OY",
+      Vowel::UH(_) => "UH",
+      Vowel::UW(_) => "UW",
+      Vowel::UX(_) => "UX",
+    }
+  }
+
   /// Get the string representation of the vowel phoneme.
   pub fn to_str(&self) -> &'static str {
     match self {
@@ -360,7 +385,7 @@ impl TryFrom<&str> for Phoneme {
 
 #[cfg(test)]
 mod tests {
-  use constants::ALL_VOWELS;
+  use crate::constants::ALL_VOWELS;
   use expectest::prelude::*;
   use super::*;
 

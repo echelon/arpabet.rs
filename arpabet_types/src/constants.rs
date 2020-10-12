@@ -1,7 +1,7 @@
-use extensions::Punctuation;
+use crate::extensions::Punctuation;
 use phf::phf_map;
 
-use phoneme::{
+use crate::phoneme::{
   Consonant,
   Phoneme,
   Vowel,
@@ -138,7 +138,7 @@ pub const ALL_PUNCTUATION: [Punctuation; 10] = [
 ];
 
 /// A map of strings to consonants.
-pub static PHONEME_MAP : phf::Map<&'static str, Phoneme> = phf_map! {
+pub const PHONEME_MAP : phf::Map<&'static str, Phoneme> = phf_map! {
   "B" => Phoneme::Consonant(Consonant::B),
   "CH" => Phoneme::Consonant(Consonant::CH),
   "D" => Phoneme::Consonant(Consonant::D),
