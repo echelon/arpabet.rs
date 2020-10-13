@@ -48,7 +48,7 @@ impl Error for ArpabetError {
     }
   }
 
-  fn cause(&self) -> Option<&Error> {
+  fn cause(&self) -> Option<&dyn Error> {
     match *self {
       ArpabetError::EmptyFile => None,
       ArpabetError::InvalidFormat { .. } => None,

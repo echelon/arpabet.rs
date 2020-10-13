@@ -73,7 +73,7 @@ pub fn load_from_file(filename: &str) -> Result<Arpabet, ArpabetError> {
   }
 }
 
-fn read_lines(reader: &mut BufRead, map: &mut HashMap<Word, Vec<Phoneme>>)
+fn read_lines(reader: &mut dyn BufRead, map: &mut HashMap<Word, Vec<Phoneme>>)
               -> Result<(), ArpabetError> {
 
   let mut buffer = String::new();

@@ -32,9 +32,22 @@ pub fn load_cmudict() -> Arpabet {
 mod tests {
   // NB: Codegen.
   use super::CMU_DICT;
+  use arpabet_types::{Phoneme, Consonant, Vowel, VowelStress};
 
   #[test]
-  fn test_cmudict_codegen() {
+  fn test_cmudict_codegen_length() {
     assert_eq!(CMU_DICT.len(), 133_793);
+  }
+
+  #[test]
+  fn test_cmudict_codegen_entries() {
+    // Y OW1 SH IY0
+    let expected = vec![
+      Phoneme::Consonant(Consonant::Y),
+      Phoneme::Vowel(Vowel::OW(VowelStress::PrimaryStress)),
+      Phoneme::Consonant(Consonant::SH),
+      Phoneme::Vowel(Vowel::IY(VowelStress::NoStress)),
+    ];
+    assert_eq!(CMU_DICT.get("yoshi").map(|res| res.to_vec()), Some(expected));
   }
 }
