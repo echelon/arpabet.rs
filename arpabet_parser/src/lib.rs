@@ -8,7 +8,7 @@ use std::io::{BufRead, BufReader};
 
 // TODO: Expose non-cmudict Arpabet-only parser.
 //  We can use this from vocodes.
-// parse_arpabet("M AA1 R IY0 OW0") -> Vec<Phoneme>
+//  eg. parse_arpabet("M AA1 R IY0 OW0") -> Vec<Phoneme>
 
 // TODO: When static constexpr are added to Rust, evaluate these at compile time.
 lazy_static! {
