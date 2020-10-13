@@ -45,7 +45,7 @@ pub struct Arpabet {
 impl Arpabet {
   /// Create an empty Arpabet.
   pub fn new() -> Arpabet {
-    Arpabet {
+    Self {
       dictionary: HashMap::new(),
     }
   }
@@ -53,8 +53,24 @@ impl Arpabet {
   /// Create an Arpabet from a map.
   /// Consumes the map.
   pub fn from_map(map: HashMap<Word, Polyphone>) -> Self {
-    Arpabet {
+    Self {
       dictionary: map
+    }
+  }
+
+  /// Create an Arpabet from a phf::Map.
+  /// Used internally for allocation from codegen.
+  /// Unfortunately this needs to allocate a new HashMap and copy data over.
+  pub fn from_phf_map(map: &phf::Map<&str, &[Phoneme]>) -> Self {
+    // TODO: An internal store over an enum of HashMap / phf::Map would be better.
+    let mut hashmap = HashMap::with_capacity(map.len());
+
+    for (k, v) in map.into_iter() {
+      hashmap.insert(k.to_string(), v.to_vec());
+    }
+
+    Self {
+      dictionary: hashmap,
     }
   }
 
@@ -132,7 +148,6 @@ mod tests {
     Vowel,
     VowelStress,
   };
-
 
   #[test]
   fn insert() {
@@ -297,6 +312,7 @@ mod tests {
       ]);
       arpa
     };
+
     let b = {
       let mut arpa = Arpabet::new();
       arpa.insert("foo".to_string(), vec![

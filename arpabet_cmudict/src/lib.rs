@@ -19,7 +19,14 @@
 extern crate arpabet_types;
 extern crate phf;
 
+use arpabet_types::Arpabet;
+
 include!(concat!(env!("OUT_DIR"), "/codegen.rs"));
+
+/// Load the CMUdict.
+pub fn load_cmudict() -> Arpabet {
+  Arpabet::from_phf_map(&CMU_DICT)
+}
 
 #[cfg(test)]
 mod tests {
