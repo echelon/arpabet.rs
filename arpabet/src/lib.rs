@@ -34,7 +34,6 @@ pub use arpabet_cmudict::load_cmudict;
 pub use arpabet_parser::load_from_file;
 pub use arpabet_parser::load_from_str;
 pub use arpabet_types::Arpabet;
-pub use arpabet_types::Phoneme;
 pub use arpabet_types::Polyphone;
 pub use arpabet_types::Word;
 pub use arpabet_types::constants::ALL_CONSONANTS;
@@ -80,13 +79,13 @@ mod tests {
 
     // Structs
     let _c = arpabet::extensions::SentenceToken::Phoneme(
-      arpabet::Phoneme::Consonant(
+      arpabet::phoneme::Phoneme::Consonant(
         arpabet::phoneme::Consonant::B));
 
     let _d = arpabet::extensions::SentenceToken::Punctuation(
       arpabet::extensions::Punctuation::Comma);
 
-    let _e = arpabet::Phoneme::Vowel(
+    let _e = arpabet::phoneme::Phoneme::Vowel(
       arpabet::phoneme::Vowel::AA(arpabet::phoneme::VowelStress::PrimaryStress));
 
     // Constants
