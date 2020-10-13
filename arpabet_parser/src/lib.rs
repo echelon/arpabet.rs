@@ -1,4 +1,3 @@
-#[cfg(test)] #[macro_use] extern crate expectest;
 #[macro_use] extern crate lazy_static;
 
 use arpabet_types::{Arpabet, ArpabetError, Word, Phoneme, PHONEME_MAP, Polyphone};
@@ -7,7 +6,8 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 
-// TODO: Expose non-cmudict Arpabet-only parser. We can use this from vocodes.
+// TODO: Expose non-cmudict Arpabet-only parser.
+//  We can use this from vocodes.
 // parse_arpabet("M AA1 R IY0 OW0") -> Vec<Phoneme>
 
 // TODO: When static constexpr are added to Rust, evaluate these at compile time.
@@ -23,7 +23,7 @@ lazy_static! {
       .expect("Regex is correct.");
 }
 
-/// Load a dictionary from text
+/// Load a dictionary from string
 /// The file format is expected to match that of
 /// [CMUdict](http://www.speech.cs.cmu.edu/cgi-bin/cmudict).
 pub fn load_from_str(text: &str) -> Result<Arpabet, ArpabetError> {

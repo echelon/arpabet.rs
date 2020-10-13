@@ -1,7 +1,7 @@
 [package]
 name = "arpabet"
 description = "A library for builing text to speech applications."
-version = "1.1.0"
+version = "2.0.0"
 keywords = [ "TTS", "text", "speech", "CMU", "cmudict" ]
 authors = ["Brandon Thomas <bt@brand.io>",
            "Brandon Thomas <echelon@gmail.com>"]
@@ -10,7 +10,7 @@ repository = "https://github.com/echelon/arpabet.rs"
 documentation = "https://docs.rs/arpabet"
 
 [dependencies]
-arpabet_types = { version = "1.1.0", optional = false, path = "../arpabet_types" }
+arpabet_types = { version = "2.0.0", optional = false, path = "../arpabet_types" }
 lazy_static = "1.0"
 phf = { version = "0.8", features = ["macros"] }
 regex = "1.0"
@@ -21,7 +21,7 @@ expectest = "0.10"
 phf_codegen = "0.8.0"
 
 [build_dependencies]
-arpabet_types = { version = "1.1.0", optional = false, path = "../arpabet_types" }
+arpabet_types = { version = "2.0.0", optional = false, path = "../arpabet_types" }
 phf_codegen = "0.8.0"
 
 [badges]
