@@ -1,2 +1,2 @@
 [workspace]
-members = ["arpabet", "arpabet_parser", "arpabet_types"]
+members = ["arpabet", "arpabet_cmudict", "arpabet_parser", "arpabet_types"]

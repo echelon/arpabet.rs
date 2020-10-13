@@ -7,6 +7,9 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 
+// TODO: Expose non-cmudict Arpabet-only parser. We can use this from vocodes.
+// parse_arpabet("M AA1 R IY0 OW0") -> Vec<Phoneme>
+
 // TODO: When static constexpr are added to Rust, evaluate these at compile time.
 lazy_static! {
   // Regex for reading CMU arpabet, or similarly formatted files.
@@ -18,6 +21,22 @@ lazy_static! {
   // Comments begin with this preamble.
   static ref COMMENT_REGEX : Regex = Regex::new(r"^;;;\s+")
       .expect("Regex is correct.");
+}
+
+/// Load a dictionary from text
+/// The file format is expected to match that of
+/// [CMUdict](http://www.speech.cs.cmu.edu/cgi-bin/cmudict).
+pub fn load_from_str(text: &str) -> Result<Arpabet, ArpabetError> {
+  let mut map : HashMap<Word, Polyphone> = HashMap::new();
+  let mut reader = BufReader::new(text.as_bytes());
+
+  let _r = read_lines(&mut reader, &mut map)?;
+
+  if map.is_empty() {
+    Err(ArpabetError::EmptyFile)
+  } else {
+    Ok(Arpabet::from_map(map))
+  }
 }
 
 /// Load a dictionary from file
@@ -112,6 +131,7 @@ fn read_lines(reader: &mut BufRead, map: &mut HashMap<Word, Vec<Phoneme>>)
 #[cfg(test)]
 mod tests {
   use crate::load_from_file;
+  use crate::load_from_str;
   use arpabet_types::{ArpabetError, Arpabet};
 
   #[test]
@@ -129,7 +149,7 @@ mod tests {
   }
 
   #[test]
-  fn test_load_bad_file() {
+  fn test_load_from_file_err() {
     let result = load_from_file("./tests/bad_file.txt");
 
     match result {
@@ -141,6 +161,40 @@ mod tests {
         },
         _ => panic!("Wrong error type!")
       },
+    }
+  }
+
+  #[test]
+  fn test_load_from_str() {
+    let text = "DOCTOR  D AA1 K T ER0\n\
+                MARIO  M AA1 R IY0 OW0";
+
+    let arpabet = load_from_str(text).expect("Text should load");
+
+    assert_eq!(arpabet.get_polyphone_str("super"), None);
+
+    assert_eq!(arpabet.get_polyphone_str("doctor"),
+               Some(vec!["D", "AA1", "K", "T","ER0"]));
+
+    assert_eq!(arpabet.get_polyphone_str("mario"),
+               Some(vec!["M", "AA1", "R", "IY0","OW0"]));
+  }
+
+  #[test]
+  fn test_load_from_str_error() {
+    let text = "DOCTOR  D AA1 K T ER0\n\
+                MARIO  M AA1 R IY0 OW0\n\
+                WAT    ";
+
+    match load_from_str(text) {
+      Ok(_) => panic!("Should have errored."),
+      Err(err) => match err {
+        ArpabetError::InvalidFormat { line_number, text } => {
+          assert_eq!(line_number, 3);
+          assert_eq!(text, "WAT    ");
+        },
+        _ => panic!("Wrong error"),
+      }
     }
   }
 }

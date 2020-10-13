@@ -1,4 +1,7 @@
+#[macro_use] extern crate lazy_static;
+
 extern crate arpabet_types;
+extern crate arpabet_parser;
 extern crate phf_codegen;
 
 use std::env;
@@ -14,7 +17,12 @@ use arpabet_types::Phoneme;
 //pub type Word = String;
 //pub type Polyphone = Vec<Phoneme>;
 
-pub const CMU_DICT_TEXT_2 : &'static str = include_str!("../cmudict/cmudict-0.7b");
+const CMU_DICT_TEXT : &'static str = include_str!("../cmudict/cmudict-0.7b");
+
+lazy_static! {
+  static ref CMUDICT : Arpabet = arpabet_parser::load_from_str(CMU_DICT_TEXT)
+      .expect("Must parse at compile time");
+}
 
 fn main() {
   let path = Path::new(&env::var("OUT_DIR").unwrap()).join("codegen.rs");
@@ -30,10 +38,8 @@ fn main() {
 
   let mut builder : Map<&'static str> = phf_codegen::Map::new();
 
-  let arpabet = Arpabet::load_cmudict();
-
-  for key in arpabet.keys() {
-    let polyphone = arpabet.get_polyphone(key).unwrap();
+  for key in CMUDICT.keys() {
+    let polyphone = CMUDICT.get_polyphone(key).unwrap();
 
     let mut code = String::from("&[");
 
