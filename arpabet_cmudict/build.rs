@@ -26,11 +26,13 @@ fn main() {
   let mut file = BufWriter::new(File::create(&path).unwrap());
 
   write!(&mut file, "use arpabet_types::Consonant;\n").unwrap();
+  write!(&mut file, "use arpabet_types::Phoneme;\n").unwrap();
   write!(&mut file, "use arpabet_types::Vowel;\n").unwrap();
   write!(&mut file, "use arpabet_types::VowelStress;\n").unwrap();
+  write!(&mut file, "\n").unwrap();
 
-  write!(&mut file, "/// Compile-time CMUdict via codegen (see 'arpabet_cmudict/build.rs')").unwrap();
-  write!(&mut file, "pub static CMU_DICT_2: phf::Map<&'static str, &'static [Phoneme]> = ").unwrap();
+  write!(&mut file, "/// Compile-time CMUdict via codegen (see 'arpabet_cmudict/build.rs')\n").unwrap();
+  write!(&mut file, "pub static CMU_DICT: phf::Map<&'static str, &'static [Phoneme]> = ").unwrap();
 
   let mut builder : Map<&'static str> = phf_codegen::Map::new();
 
