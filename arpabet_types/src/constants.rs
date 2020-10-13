@@ -1,3 +1,5 @@
+//! This module contains constant lists and maps of phonemes in given classes.
+
 use crate::extensions::Punctuation;
 use phf::phf_map;
 

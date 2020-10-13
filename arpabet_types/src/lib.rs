@@ -1,5 +1,20 @@
+// Copyright (c) 2015, 2018, 2020 Brandon Thomas <bt@brand.io>
+
+#![deny(dead_code)]
+#![deny(missing_docs)]
+#![deny(unreachable_patterns)]
+#![deny(unused_extern_crates)]
+#![deny(unused_imports)]
+#![deny(unused_qualifications)]
+
+//! This crate contains the core types for the **arpabet** crate. This crate is
+//! split into sub-crates to aid in compile-time loading of the CMUdict.
+//!
+//! You shouldn't need to import this crate directly. The **arpabet** crate
+//! includes this transitively.
+//! ```
+
 #[cfg(test)] #[macro_use] extern crate expectest;
-#[macro_use] extern crate lazy_static;
 
 pub mod constants;
 pub mod error;
@@ -10,11 +25,8 @@ pub use constants::*;
 pub use error::*;
 pub use extensions::*;
 pub use phoneme::*;
-use regex::Regex;
 use std::collections::HashMap;
 use std::collections::hash_map::Keys;
-use std::fs::File;
-use std::io::{BufReader, BufRead};
 
 /// A word is a simple string containing no space characters.
 pub type Word = String;
@@ -45,14 +57,6 @@ impl Arpabet {
       dictionary: map
     }
   }
-
-  // TODO: When static constexpr are added to Rust, evaluate this at compile time.
-  /// Loads and caches the CMU Arpabet, which is already present in an unparsed
-  /// form in memory.
-  // TODO: Remove or replace API
-  // pub fn load_cmudict() -> &'static Arpabet {
-  //   &CMU_DICT
-  // }
 
   /// Get a polyphone from the dictionary.
   pub fn get_polyphone(&self, word: &str) -> Option<Polyphone> {

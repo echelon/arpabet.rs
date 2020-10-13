@@ -1,3 +1,20 @@
+// Copyright (c) 2015, 2018, 2020 Brandon Thomas <bt@brand.io>
+
+#![deny(dead_code)]
+#![deny(missing_docs)]
+#![deny(unreachable_patterns)]
+#![deny(unused_extern_crates)]
+#![deny(unused_imports)]
+#![deny(unused_qualifications)]
+
+//! This crate contains the parsing functionality for the **arpabet** crate.
+//! This crate is split into sub-crates to aid in compile-time loading of the
+//! CMUdict.
+//!
+//! You shouldn't need to import this crate directly. The **arpabet** crate
+//! includes this transitively.
+//! ```
+
 #[macro_use] extern crate lazy_static;
 
 use arpabet_types::{Arpabet, ArpabetError, Word, Phoneme, PHONEME_MAP, Polyphone};
@@ -132,7 +149,7 @@ fn read_lines(reader: &mut BufRead, map: &mut HashMap<Word, Vec<Phoneme>>)
 mod tests {
   use crate::load_from_file;
   use crate::load_from_str;
-  use arpabet_types::{ArpabetError, Arpabet};
+  use arpabet_types::ArpabetError;
 
   #[test]
   fn test_load_from_file() {
