@@ -10,19 +10,21 @@ repository = "https://github.com/echelon/arpabet.rs"
 documentation = "https://docs.rs/arpabet"
 
 [dependencies]
-arpabet_types = { version = "2.0.0", optional = false, path = "../arpabet_types" }
 arpabet_parser = { version = "2.0.0", optional = false, path = "../arpabet_parser" }
+arpabet_types = { version = "2.0.0", optional = false, path = "../arpabet_types" }
 lazy_static = "1.0"
 phf = { version = "0.8", features = ["macros"] }
 regex = "1.0"
 
 [dev_dependencies]
+chrono = "0.4"
+expectest = "0.10"
 phf_codegen = "0.8.0"
 
 [build_dependencies]
-lazy_static = "1.0"
-arpabet_types = { version = "2.0.0", optional = false, path = "../arpabet_types" }
 arpabet_parser = { version = "2.0.0", optional = false, path = "../arpabet_parser" }
+arpabet_types = { version = "2.0.0", optional = false, path = "../arpabet_types" }
+lazy_static = "1.0"
 phf_codegen = "0.8.0"
 
 [badges]
