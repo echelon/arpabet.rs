@@ -26,8 +26,8 @@ use arpabet_types::Arpabet;
 
 include!(concat!(env!("OUT_DIR"), "/codegen.rs"));
 
+// TODO: When static constexpr are added to Rust, evaluate this at compile time.
 lazy_static! {
-  // TODO: When static constexpr are added to Rust, evaluate this at compile time.
   // Lazily cached copy of the entire CMU arpabet.
   static ref ARPABET_CMU_DICT : Arpabet = load_cmudict_lazy();
 }

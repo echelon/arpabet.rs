@@ -14,103 +14,61 @@
 //!
 //! Usage:
 //!
-//! TODO: FIX THIS
-//! ```text
+//! ```
 //! extern crate arpabet;
-//! use arpabet::Arpabet;
+//! use arpabet::load_cmudict;
 //!
-//! let arpabet = Arpabet::load_cmudict();
+//! let arpabet = load_cmudict();
 //!
 //! assert_eq!(arpabet.get_polyphone_str("test"),
 //!   Some(vec!["T".into(), "EH1".into(), "S".into(), "T".into()]));
 //! ```
 
-#[macro_use] extern crate lazy_static;
-extern crate phf;
-extern crate regex;
+extern crate arpabet_cmudict;
+extern crate arpabet_parser;
 extern crate arpabet_types;
 
-#[cfg(test)] extern crate chrono;
-#[cfg(test)] #[macro_use] extern crate expectest;
-
-pub use arpabet_types::constants;
-pub use arpabet_types::error;
-pub use arpabet_types::phoneme;
-pub use arpabet_types::extensions;
-
-use regex::Regex;
-use std::collections::HashMap;
-use std::collections::hash_map::Keys;
-use std::fs::File;
-use std::io::BufRead;
-use std::io::BufReader;
-
-pub use arpabet_types::Phoneme;
-pub use arpabet_types::Word;
-pub use arpabet_types::Polyphone;
+// We simply re-export the symbols in the shape of the original arpabet crate
+// as it was before its decomposition into several crates.
+pub use arpabet_cmudict::load_cmudict;
+pub use arpabet_parser::load_from_file;
+pub use arpabet_parser::load_from_str;
 pub use arpabet_types::Arpabet;
+pub use arpabet_types::Phoneme;
+pub use arpabet_types::Polyphone;
+pub use arpabet_types::Word;
+pub use arpabet_types::constants::ALL_CONSONANTS;
+pub use arpabet_types::constants::ALL_PUNCTUATION;
+pub use arpabet_types::constants::ALL_VOWELS;
+pub use arpabet_types::constants::PHONEME_MAP;
+pub use arpabet_types::constants;
+pub use arpabet_types::error::ArpabetError;
+pub use arpabet_types::error;
+pub use arpabet_types::extensions;
+pub use arpabet_types::phoneme;
 
-pub use error::ArpabetError;
-
-pub use constants::ALL_CONSONANTS;
-pub use constants::ALL_PUNCTUATION;
-pub use constants::ALL_VOWELS;
-pub use constants::PHONEME_MAP;
-
-//pub const CMU_DICT_TEXT : &'static str = include_str!("../../cmudict/cmudict-0.7b");
-
-// TODO
-// lazy_static! {
-//   // TODO: When static constexpr are added to Rust, evaluate this at compile time.
-//   // Lazily cached copy of the entire CMU arpabet.
-//   static ref CMU_DICT : Arpabet = Arpabet::load_from_str(CMU_DICT_TEXT)
-//       .expect("CMU dictionary should lazily load.");
-// }
-
-// TODO
-//include!(concat!(env!("OUT_DIR"), "/codegen.rs"));
-
-// TODO
-// pub fn parse_keyword(keyword: &str) -> Option<Keyword> {
-//   KEYWORDS.get(keyword).cloned()
-// }
-
+// Integration tests.
 #[cfg(test)]
 mod tests {
-  use chrono::prelude::*;
-  use expectest::prelude::*;
+  use crate as arpabet;
 
-  use super::*;
+  #[test]
+  fn test_load_cmudict() {
+    let cmudict = arpabet::load_cmudict();
 
-  use phoneme::{
-    Consonant,
-    Vowel,
-    VowelStress,
-  };
+    assert_eq!(cmudict.get_polyphone_str("game"),
+      Some(vec!["G", "EY1", "M"]));
 
-  // #[test]
-  // fn test_build() {
-  //   assert_eq!(CMU_DICT_2.len(), 133_793);
-  //   //assert_eq!(CMU_DICT_2.get("A"), Some(&["T"]));
-  // }
+    assert_eq!(cmudict.get_polyphone_str("boy"),
+      Some(vec!["B", "OY1"]));
 
-  // #[test]
-  // fn load_cmudict() {
-  //   let arpabet = Arpabet::load_cmudict();
+    assert_eq!(cmudict.get_polyphone_str("advance"),
+      Some(vec!["AH0", "D", "V", "AE1", "N", "S"]));
 
-  //   assert_eq!(arpabet.get_polyphone_str("game"),
-  //     Some(vec!["G", "EY1", "M"]));
+    assert_eq!(cmudict.get_polyphone_str("sp"), None);
 
-  //   assert_eq!(arpabet.get_polyphone_str("boy"),
-  //     Some(vec!["B", "OY1"]));
-
-  //   assert_eq!(arpabet.get_polyphone_str("advance"),
-  //     Some(vec!["AH0", "D", "V", "AE1", "N", "S"]));
-
-  //   assert_eq!(arpabet.get_polyphone_str("sp"), None);
-
-  //   assert_eq!(arpabet.get_polyphone_str("ZZZZZ"), None);
-  // }
+    assert_eq!(cmudict.get_polyphone_str("ZZZZZ"), None);
+  }
 
   // #[test]
   // fn cmudict_is_cached() {
@@ -131,6 +89,7 @@ mod tests {
   //   expect!(duration.num_milliseconds()).to(be_less_than(1_000));
   // }
 
+  /*
   #[test]
   fn insert() {
     let mut arpa = Arpabet::new();
@@ -372,4 +331,5 @@ mod tests {
     ]));
     assert_eq!(a.get_polyphone("bin"), None);
   }
+  */
 }
