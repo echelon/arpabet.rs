@@ -7,22 +7,13 @@
 #![deny(unused_imports)]
 #![deny(unused_qualifications)]
 
-//! **Arpabet (_A1 R P AH0 B EH2 T_)**, a library for speech synthesis that
-//! leverages Carnegie Mellon University's _[CMUdict](http://www.speech.cs.cmu.edu/cgi-bin/cmudict)_.
-//! This is a simple library to enable the building of concatenative speech
-//! synthesis engines.
+//! This crate contains a compile-time allocated
+//! _[CMUdict](http://www.speech.cs.cmu.edu/cgi-bin/cmudict)_, which is
+//! Carnegie Mellon University's massive dictionary of phoneme-annotated
+//! English words.
 //!
-//! Usage:
-//!
-//! TODO: FIX THIS
-//! ```text
-//! extern crate arpabet;
-//! use arpabet::Arpabet;
-//!
-//! let arpabet = Arpabet::load_cmudict();
-//!
-//! assert_eq!(arpabet.get_polyphone_str("test"),
-//!   Some(vec!["T".into(), "EH1".into(), "S".into(), "T".into()]));
+//! You shouldn't need to import this crate directly. The **arpabet** crate
+//! includes this transitively.
 //! ```
 
 extern crate arpabet_types;
@@ -37,7 +28,6 @@ mod tests {
 
   #[test]
   fn test_cmudict_codegen() {
-    assert_eq!(CMU_DICT.len(), 133_793 + 1);
-    //assert_eq!(CMU_DICT_2.get("A"), Some(&["T"]));
+    assert_eq!(CMU_DICT.len(), 133_793);
   }
 }

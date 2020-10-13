@@ -5,7 +5,7 @@ extern crate arpabet_parser;
 extern crate arpabet_types;
 extern crate phf_codegen;
 
-use arpabet_types::{Arpabet, Consonant, Phoneme, Polyphone, VowelStress};
+use arpabet_types::{Arpabet, Phoneme, VowelStress};
 use phf_codegen::Map;
 use std::env;
 use std::fs::File;
@@ -16,6 +16,8 @@ const CMU_DICT_TEXT : &'static str = include_str!("../cmudict/cmudict-0.7b");
 
 lazy_static! {
   // NB: Static lifetime is required for use in phf_codegen.
+  // TODO: Super inefficient to process this THREE TIMES for codegen. Sigh.
+  //  Hopefully builds won't time out.
   static ref CMUDICT : Arpabet = arpabet_parser::load_from_str(CMU_DICT_TEXT)
       .expect("Must parse at compile time");
 }
