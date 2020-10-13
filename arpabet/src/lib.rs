@@ -1,11 +1,11 @@
 // Copyright (c) 2015, 2018, 2020 Brandon Thomas <bt@brand.io>
 
-//#![deny(dead_code)]
-// #![deny(missing_docs)]
-// #![deny(unreachable_patterns)]
-// #![deny(unused_extern_crates)]
-// #![deny(unused_imports)]
-// #![deny(unused_qualifications)]
+#![deny(dead_code)]
+#![deny(missing_docs)]
+#![deny(unreachable_patterns)]
+#![deny(unused_extern_crates)]
+#![deny(unused_imports)]
+#![deny(unused_qualifications)]
 
 //! **Arpabet (_A1 R P AH0 B EH2 T_)**, a library for speech synthesis that
 //! leverages Carnegie Mellon University's _[CMUdict](http://www.speech.cs.cmu.edu/cgi-bin/cmudict)_.
@@ -53,7 +53,7 @@ mod tests {
   use crate as arpabet;
 
   #[test]
-  fn test_load_cmudict() {
+  fn integration_test_load_cmudict() {
     let cmudict = arpabet::load_cmudict();
 
     assert_eq!(cmudict.get_polyphone_str("game"),

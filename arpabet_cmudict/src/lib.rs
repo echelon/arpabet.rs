@@ -55,7 +55,7 @@ mod tests {
 
   #[test]
   fn test_cmudict_codegen_length() {
-    //assert_eq!(CMU_DICT.len(), 133_793);
+    assert_eq!(CMU_DICT.len(), 133_793);
   }
 
   #[test]
