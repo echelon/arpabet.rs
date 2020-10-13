@@ -12,7 +12,7 @@ use std::fs::File;
 use std::io::{BufWriter, Write};
 use std::path::Path;
 
-const CMU_DICT_TEXT : &'static str = include_str!("../cmudict/cmudict-0.7b");
+const CMU_DICT_TEXT : &'static str = include_str!("./cmudict/cmudict-0.7b");
 
 lazy_static! {
   // NB: Static lifetime is required for use in phf_codegen.
