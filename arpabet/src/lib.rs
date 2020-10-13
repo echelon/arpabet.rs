@@ -40,9 +40,7 @@ pub use arpabet_types::constants::ALL_CONSONANTS;
 pub use arpabet_types::constants::ALL_PUNCTUATION;
 pub use arpabet_types::constants::ALL_VOWELS;
 pub use arpabet_types::constants::PHONEME_MAP;
-pub use arpabet_types::constants;
 pub use arpabet_types::error::ArpabetError;
-pub use arpabet_types::error;
 pub use arpabet_types::extensions;
 pub use arpabet_types::phoneme;
 
