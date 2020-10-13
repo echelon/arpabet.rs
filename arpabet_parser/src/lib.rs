@@ -110,8 +110,9 @@ fn read_lines(reader: &mut BufRead, map: &mut HashMap<Word, Vec<Phoneme>>)
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
   use crate::load_from_file;
+  use arpabet_types::{ArpabetError, Arpabet};
 
   #[test]
   fn test_load_from_file() {
@@ -125,5 +126,21 @@ mod test {
                Some(vec!["P", "IY1", "K", "AH0", "CH", "UW1"]));
 
     assert_eq!(arpabet.get_polyphone_str("bulbasaur"), None);
+  }
+
+  #[test]
+  fn test_load_bad_file() {
+    let result = load_from_file("./tests/bad_file.txt");
+
+    match result {
+      Ok(_) => panic!("Should not be okay!"),
+      Err(err) => match err {
+        ArpabetError::InvalidFormat { line_number, text } => {
+          assert_eq!(line_number, 1);
+          assert_eq!(text, "this is not arpabet");
+        },
+        _ => panic!("Wrong error type!")
+      },
+    }
   }
 }
